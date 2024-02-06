@@ -2,7 +2,7 @@ import uuid
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
 
@@ -35,11 +35,11 @@ class User(BaseModel):
     username: str
     password: str
     is_admin: bool = False
-    tokens: list[str] = []
+    sessions: list[str] = []
 
 
-def get_user_by_token(token: str) -> User:
-    result = users_collection.find_one({"tokens": token})
+def get_user_by_session(session: str) -> User:
+    result = users_collection.find_one({"sessions": session})
     if result is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     return User(**result)
@@ -57,8 +57,8 @@ def user_exist(username: str) -> bool:
 
 
 @app.post("/users/create")
-async def post_users_register(token: str, username: str) -> None:
-    user = get_user_by_token(token)
+async def post_users_register(session: str, username: str) -> None:
+    user = get_user_by_session(session)
     if not user.is_admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN)
     if user_exist(username):
@@ -67,21 +67,21 @@ async def post_users_register(token: str, username: str) -> None:
     users_collection.insert_one(new_user.model_dump())
 
 
-@app.get("/users/token")
-async def get_users_token(username: str, password: str) -> str:
+@app.get("/users/session")
+async def get_users_session(username: str, password: str) -> str:
     user = get_user_by_username(username)
     if user.password != password:
         raise HTTPException(status.HTTP_403_FORBIDDEN)
-    token = str(uuid.uuid4())
+    session = str(uuid.uuid4())
     users_collection.update_one(
-        {"username": user.username}, {"$push": {"tokens": token}}
+        {"username": user.username}, {"$push": {"sessions": session}}
     )
-    return token
+    return session
 
 
 @app.put("/users/password")
-async def put_users_password(token: str, username: str, new_password: str) -> None:
-    current_user = get_user_by_token(token)
+async def put_users_password(session: str, username: str, new_password: str) -> None:
+    current_user = get_user_by_session(session)
     user_to_update = get_user_by_username(username)
     if not current_user.is_admin and current_user.username != user_to_update.username:
         raise HTTPException(status.HTTP_403_FORBIDDEN)
