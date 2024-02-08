@@ -77,15 +77,22 @@ def user_exist(username: str) -> bool:
 
 
 @app.post("/users/create")
-async def post_users_register(session: str, username: str) -> None:
+async def post_users_register(session: str, username: str, password: str) -> None:
+    if len(password) == 0:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST)
     user = get_user_by_session(session)
     if not user.is_admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN)
     if user_exist(username):
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
-    new_user = User(username=username, password=username)
+    new_user = User(username=username, password=password)
     users_collection.insert_one(new_user.model_dump())
+
+
+@app.get("/users")
+async def get_users() -> list[UserView]:
+    return [UserView(**user) for user in users_collection.find({}).sort("username")]
 
 
 @app.get("/users/session")
@@ -108,7 +115,9 @@ async def put_users_password(session: str, username: str, new_password: str) -> 
     if not current_user.is_admin and current_user.username != user_to_update.username:
         raise HTTPException(status.HTTP_403_FORBIDDEN)
 
-    users_collection.update_one({"username": username}, {"password": new_password})
+    users_collection.update_one(
+        {"username": username}, {"$set": {"password": new_password}}
+    )
 
 
 @app.get("/users/by/session")
@@ -145,7 +154,7 @@ async def post_tokens_reward(session: str, username: str, value: int) -> None:
                     reciever=username,
                     value=value,
                     type=TransactionType.REWARD,
-                )
+                ).model_dump()
             )
 
 
@@ -174,7 +183,7 @@ async def post_tokens_transfer(session: str, username: str, value: int) -> None:
                     reciever=username,
                     value=value,
                     type=TransactionType.TRANSFER,
-                )
+                ).model_dump()
             )
 
 
