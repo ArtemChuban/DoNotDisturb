@@ -53,6 +53,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Transactions</title>
+</svelte:head>
+
 <div class="w-full h-full flex flex-col justify-start items-center">
 	<h1 class="text-2xl m-4 font-bold">Transactions</h1>
 	<div class="flex w-5/6 justify-around items-center mb-5">

@@ -39,6 +39,10 @@
 	};
 </script>
 
+<svelte:head>
+	<title>Password</title>
+</svelte:head>
+
 <div class="w-1/2">
 	<h1 class="text-center mb-10 text-slate-100 font-bold text-xl">Change password</h1>
 	<form on:submit|preventDefault={() => (promise = handleChange())} class="flex flex-col">

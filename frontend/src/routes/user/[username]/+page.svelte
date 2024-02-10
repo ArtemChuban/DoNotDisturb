@@ -23,6 +23,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>{data.username}</title>
+</svelte:head>
+
 <div class="flex flex-col items-center justify-center bg-slate-800 w-1/2 h-1/2 rounded-md">
 	{#await userPromise}
 		<div

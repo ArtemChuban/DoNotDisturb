@@ -36,6 +36,10 @@
 	};
 </script>
 
+<svelte:head>
+	<title>Create</title>
+</svelte:head>
+
 <div class="w-1/2">
 	<h1 class="text-center mb-10 text-slate-100 font-bold text-xl">Create new account</h1>
 	<form on:submit|preventDefault={() => (promise = handleCreate())} class="flex flex-col">
