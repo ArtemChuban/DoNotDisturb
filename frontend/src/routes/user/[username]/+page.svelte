@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { getUserByUsername, type User } from '$lib/api';
+	import { notification, NotificationType } from '$lib/store';
 	import { onMount } from 'svelte';
 	import { linear } from 'svelte/easing';
 	import { tweened } from 'svelte/motion';
@@ -9,30 +9,52 @@
 		username: string;
 	}
 
+	const getPromise = async () => {
+		const user = await getUserByUsername(data.username);
+		tokens.set(user.tokens);
+		return user;
+	};
+
 	export let data: Data;
-
-	let user: User = { username: 'username', is_admin: false, tokens: 0 };
 	let tokens = tweened(0, { duration: 500, easing: linear });
-
-	onMount(async () => {
-		const value = await getUserByUsername(data.username);
-		if (value === null) {
-			goto('/');
-			return;
-		}
-		user = value;
-		$tokens = user.tokens;
+	let userPromise: Promise<User> = new Promise(() => null);
+	onMount(() => {
+		userPromise = getPromise();
 	});
 </script>
 
 <div class="flex flex-col items-center justify-center bg-slate-800 w-1/2 h-1/2 rounded-md">
-	<div
-		class="rounded-full bg-slate-100 text-slate-900 text-4xl w-24 h-24 flex items-center justify-center mb-5"
-	>
-		<span>{user.username[0].toUpperCase()}</span>
-	</div>
-	<span class="{user.is_admin ? 'text-red-400' : ''} break-words w-full p-5 text-center"
-		>{user.username}</span
-	>
-	<span class="mt-5 text-4xl">{Math.floor($tokens)}</span>
+	{#await userPromise}
+		<div
+			role="status"
+			class="animate-pulse rounded-full bg-slate-100 text-slate-900 text-4xl w-24 h-24 flex items-center justify-center mb-5"
+		></div>
+		<span
+			role="status"
+			class="animate-pulse break-words w-1/2 m-5 rounded-md text-center bg-slate-700"><wbr /></span
+		>
+		<span role="status" class="animate-pulse mt-5 text-4xl bg-slate-700 w-1/2 rounded-md"
+			><wbr /></span
+		>
+	{:then user}
+		<div
+			class="rounded-full bg-slate-100 text-slate-900 text-4xl w-24 h-24 flex items-center justify-center mb-5"
+		>
+			<span>{user.username[0].toUpperCase()}</span>
+		</div>
+		<span class="{user.is_admin ? 'text-red-400' : ''} break-words w-full p-5 text-center"
+			>{user.username}</span
+		>
+		<span class="mt-5 text-4xl">{Math.floor($tokens)}</span>
+	{:catch error}
+		<div
+			role="status"
+			class="rounded-full bg-slate-100 text-slate-900 text-4xl w-24 h-24 flex items-center justify-center mb-5"
+		></div>
+		<span role="status" class="break-words w-1/2 m-5 rounded-md text-center bg-slate-700"
+			><wbr /></span
+		>
+		<span role="status" class="mt-5 text-4xl bg-slate-700 w-1/2 rounded-md"><wbr /></span>
+		{(notification.set({ message: String(error), type: NotificationType.ERROR }), '')}
+	{/await}
 </div>

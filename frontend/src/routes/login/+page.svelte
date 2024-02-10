@@ -1,6 +1,7 @@
-<script>
+<script lang="ts">
 	import { goto } from '$app/navigation';
-	import { BACKEND_URL } from '$lib/api';
+	import FetchStatus from '$lib/FetchStatus.svelte';
+	import { getSession } from '$lib/api';
 	import { onMount } from 'svelte';
 
 	onMount(() => {
@@ -11,33 +12,19 @@
 
 	let username = '';
 	let password = '';
-	let error = '';
+
+	let promise: Promise<void>;
 
 	const handleLogin = async () => {
-		try {
-			const response = await fetch(
-				`${BACKEND_URL}/users/session?username=${username}&password=${password}`,
-				{ method: 'GET' }
-			);
-			if (response.ok) {
-				const session = await response.json();
-				localStorage.setItem('session', session);
-				goto('/');
-			} else {
-				const errorData = await response.json();
-				console.error('Authentication failed:', errorData);
-				error = errorData.detail;
-			}
-		} catch (err) {
-			console.error('Authentication error:', err);
-			error = String(err);
-		}
+		const session = await getSession(username, password);
+		localStorage.setItem('session', session);
+		goto('/');
 	};
 </script>
 
 <div class="w-1/2">
 	<h1 class="text-center mb-10 text-slate-100 font-bold text-xl">Sign in to your account</h1>
-	<form on:submit|preventDefault={handleLogin} class="flex flex-col">
+	<form on:submit|preventDefault={() => (promise = handleLogin())} class="flex flex-col">
 		<p class="text-slate-100 text-sm">Username</p>
 		<input
 			bind:value={username}
@@ -54,6 +41,7 @@
 		>
 	</form>
 </div>
-{#if error}
-	<p class="bg-red-700 mt-3 rounded-md p-1 w-1/2 text-slate-100 text-center">{error}</p>
-{/if}
+
+<div class="w-full h-8">
+	<FetchStatus {promise} />
+</div>

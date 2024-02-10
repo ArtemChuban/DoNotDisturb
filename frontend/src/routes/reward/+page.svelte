@@ -1,64 +1,44 @@
-<script>
+<script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { BACKEND_URL } from '$lib/api';
+	import { getUser, reward, type User } from '$lib/api';
+	import FetchStatus from '$lib/FetchStatus.svelte';
+	import { notification, NotificationType } from '$lib/store';
+	import UserSelect from '$lib/UserSelect.svelte';
 
-	let user = { username: 'username', is_admin: false, tokens: 0 };
+	let session: string;
+	let user: User;
 	let username = '';
 	let value = '';
-	let error = '';
+	let promise: Promise<void>;
 
-	onMount(() => {
-		const session = localStorage.getItem('session');
-		if (session === null) {
+	onMount(async () => {
+		const s = localStorage.getItem('session');
+		if (s === null) {
 			goto('/login');
 			return;
 		}
-		fetch(`${BACKEND_URL}/users/by/session?session=${session}`, {
-			method: 'GET'
-		})
-			.then(async (response) => {
-				user = await response.json();
-				if (!user.is_admin) {
-					goto('/');
-				}
-			})
-			.catch((err) => {
-				console.error(err);
-			});
+		session = s;
+		user = await getUser();
+		if (!user.is_admin) goto('/');
 	});
 
 	const handleReward = async () => {
-		try {
-			const response = await fetch(
-				`${BACKEND_URL}/tokens/reward?session=${localStorage.getItem('session')}&username=${username}&value=${value}`,
-				{
-					method: 'POST'
-				}
-			);
-			if (response.ok) {
-				goto('/');
-			} else {
-				const errorData = await response.json();
-				console.error('Reward failed:', errorData);
-				error = errorData.detail;
-			}
-		} catch (err) {
-			console.error('Reward error:', err);
-			error = String(err);
-		}
+		await reward(session, username, +value);
+		notification.set({
+			message: `${username} rewarded for ${value} token${+value === 1 ? '' : 's'}`,
+			type: NotificationType.SUCCESS
+		});
+		goto('/');
 	};
 </script>
 
 <div class="w-1/2">
 	<h1 class="text-center mb-10 text-slate-100 font-bold text-xl">Reward</h1>
-	<form on:submit|preventDefault={handleReward} class="flex flex-col">
+	<form on:submit|preventDefault={() => (promise = handleReward())} class="flex flex-col">
 		<p class="text-slate-100 text-sm">Username</p>
-		<input
-			bind:value={username}
-			class="mb-5 border rounded-md bg-gray-800 border-gray-700 p-1 text-slate-100"
-		/>
-		<p class="text-slate-100 text-sm">Value</p>
+		<UserSelect bind:username />
+		<p class="mt-3 text-slate-100 text-sm">Value</p>
 		<input
 			bind:value
 			type="number"
@@ -68,6 +48,7 @@
 		>
 	</form>
 </div>
-{#if error}
-	<p class="bg-red-700 mt-3 rounded-md p-1 w-1/2 text-slate-100 text-center">{error}</p>
-{/if}
+
+<div class="w-full h-8">
+	<FetchStatus {promise} />
+</div>

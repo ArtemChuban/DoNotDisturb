@@ -4,8 +4,13 @@
 	import { goto } from '$app/navigation';
 
 	onMount(async () => {
-		const user = await getUser();
-		if (user === null) return;
-		goto(`/user/${user.username}`);
+		getUser()
+			.then((user) => {
+				goto(`/user/${user.username}`);
+			})
+			.catch((err) => {
+				localStorage.removeItem('session');
+				goto('/login');
+			});
 	});
 </script>
