@@ -3,22 +3,31 @@ version: "3"
 services:
   frontend:
     build: ./frontend
-    ports:
-      - "80:4173"
     depends_on:
+      - nginx
       - backend
 
   backend:
     build: ./backend
-    ports:
-      - "8000:8000"
     depends_on:
+      - nginx
       - mongo
 
   mongo:
     image: mongo:latest
     volumes:
       - mongo_volume:/data/db
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/config:/config
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /tmp/acme_challenge:/tmp/acme_challenge
+    restart: always
 
 volumes:
   mongo_volume:
