@@ -11,6 +11,7 @@
 	import profileIcon from '$lib/assets/person.svg';
 	import createIcon from '$lib/assets/add.svg';
 	import rewardIcon from '$lib/assets/reward.svg';
+	import usersIcon from '$lib/assets/collaboration.svg';
 
 	let menuOpened = false;
 	let is_admin = false;
@@ -68,6 +69,7 @@
 			/>
 			<MenuButton icon={transferIcon} onclick={() => goto('/transfer')} text="Transfer" />
 			<MenuButton icon={profileIcon} onclick={() => goto('/')} text="My profile" />
+			<MenuButton icon={usersIcon} onclick={() => goto('/users')} text="Leaderboard" />
 
 			{#if is_admin}
 				<MenuButton icon={createIcon} onclick={() => goto('/create')} text="Create user" />

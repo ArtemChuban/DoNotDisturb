@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { linear } from 'svelte/easing';
 	import { tweened } from 'svelte/motion';
+	import UserAvatar from '$lib/UserAvatar.svelte'
 
 	interface Data {
 		username: string;
@@ -41,11 +42,9 @@
 			><wbr /></span
 		>
 	{:then user}
-		<div
-			class="rounded-full bg-slate-100 text-slate-900 text-4xl w-24 h-24 flex items-center justify-center mb-5"
-		>
-			<span>{user.username[0].toUpperCase()}</span>
-		</div>
+	<div class="w-24 h-24 text-3xl mb-5">
+		<UserAvatar username={user.username}/>
+	</div>
 		<span class="{user.is_admin ? 'text-red-400' : ''} break-words w-full p-5 text-center"
 			>{user.username}</span
 		>
