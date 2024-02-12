@@ -1,5 +1,7 @@
 import { goto } from '$app/navigation';
-import { PUBLIC_BACKEND_URL } from '$env/static/public';
+import { env } from '$env/dynamic/public'
+
+const BACKEND_URL = `http${env.PUBLIC_MODE === 'production' ? 's' : ''}://${env.PUBLIC_SERVER_NAME}/api`
 
 export interface User {
 	username: string;
@@ -30,7 +32,7 @@ export const getUser: () => Promise<User> = async () => {
 		goto('/login');
 		return null;
 	}
-	const response = await fetch(`${PUBLIC_BACKEND_URL}/users/by/session?session=${session}`, {
+	const response = await fetch(`${BACKEND_URL}/users/by/session?session=${session}`, {
 		method: 'GET'
 	});
 	if (!response.ok) await throwError(response);
@@ -39,7 +41,7 @@ export const getUser: () => Promise<User> = async () => {
 };
 
 export const getUserByUsername: (username: string) => Promise<User> = async (username: string) => {
-	const response = await fetch(`${PUBLIC_BACKEND_URL}/users/by/username?username=${username}`, {
+	const response = await fetch(`${BACKEND_URL}/users/by/username?username=${username}`, {
 		method: 'GET'
 	});
 	if (!response.ok) await throwError(response);
@@ -51,7 +53,7 @@ export const getSession: (username: string, password: string) => Promise<string>
 	password: string
 ) => {
 	const response = await fetch(
-		`${PUBLIC_BACKEND_URL}/users/session?username=${username}&password=${password}`,
+		`${BACKEND_URL}/users/session?username=${username}&password=${password}`,
 		{ method: 'GET' }
 	);
 	if (!response.ok) await throwError(response);
@@ -64,14 +66,14 @@ export const changePassword: (
 	new_password: string
 ) => Promise<void> = async (session: string, username: string, new_password: string) => {
 	const response = await fetch(
-		`${PUBLIC_BACKEND_URL}/users/password?session=${localStorage.getItem('session')}&username=${username}&new_password=${new_password}`,
+		`${BACKEND_URL}/users/password?session=${localStorage.getItem('session')}&username=${username}&new_password=${new_password}`,
 		{ method: 'PUT' }
 	);
 	if (!response.ok) await throwError(response);
 };
 
 export const getAllUsers: () => Promise<Array<User>> = async () => {
-	const response = await fetch(`${PUBLIC_BACKEND_URL}/users`);
+	const response = await fetch(`${BACKEND_URL}/users`);
 	if (!response.ok) await throwError(response);
 	return await response.json();
 };
@@ -82,7 +84,7 @@ export const transfer: (session: string, username: string, value: number) => Pro
 	value: number
 ) => {
 	const response = await fetch(
-		`${PUBLIC_BACKEND_URL}/tokens/transfer?session=${session}&username=${username}&value=${value}`,
+		`${BACKEND_URL}/tokens/transfer?session=${session}&username=${username}&value=${value}`,
 		{
 			method: 'POST'
 		}
@@ -108,7 +110,7 @@ export const getTransactions: (
 	if (reciever !== null) {
 		query += `&reciever=${reciever}`;
 	}
-	const response = await fetch(`${PUBLIC_BACKEND_URL}/transactions?${query}`);
+	const response = await fetch(`${BACKEND_URL}/transactions?${query}`);
 	if (!response.ok) await throwError(response);
 	return await response.json();
 };
@@ -119,7 +121,7 @@ export const createUser: (
 	password: string
 ) => Promise<void> = async (session: string, username: string, password: string) => {
 	const response = await fetch(
-		`${PUBLIC_BACKEND_URL}/users/create?session=${session}&username=${username}&password=${password}`,
+		`${BACKEND_URL}/users/create?session=${session}&username=${username}&password=${password}`,
 		{ method: 'POST' }
 	);
 	if (!response.ok) await throwError(response);
@@ -127,7 +129,7 @@ export const createUser: (
 
 export const reward = async (session: string, username: string, value: number) => {
 	const response = await fetch(
-		`${PUBLIC_BACKEND_URL}/tokens/reward?session=${session}&username=${username}&value=${value}`,
+		`${BACKEND_URL}/tokens/reward?session=${session}&username=${username}&value=${value}`,
 		{
 			method: 'POST'
 		}

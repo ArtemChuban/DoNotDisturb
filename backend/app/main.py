@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 from enum import Enum
 import time
+import os
 import re
 
 
@@ -21,7 +22,7 @@ async def lifespan(app: FastAPI):
     ...
 
 
-app = FastAPI(debug=True, lifespan=lifespan, root_path="/api")
+app = FastAPI(debug=os.environ["MODE"] == "local", lifespan=lifespan, root_path="/api")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,7 +31,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-mongoClient = MongoClient("mongo", 27017)
+mongoClient = MongoClient(
+    f'mongodb://{os.environ["MONGO_USERNAME"]}:{os.environ["MONGO_PASSWORD"]}@mongo:27017'
+)
 database = mongoClient["DoNotDisturb"]
 users_collection = database["users"]
 transactions_collection = database["transactions"]
