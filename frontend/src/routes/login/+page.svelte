@@ -3,6 +3,7 @@
 	import FetchStatus from '$lib/FetchStatus.svelte';
 	import { getSession } from '$lib/api';
 	import { onMount } from 'svelte';
+	import { t } from '$lib/i18n';
 
 	onMount(() => {
 		if (localStorage.getItem('session') !== null) {
@@ -27,21 +28,21 @@
 </svelte:head>
 
 <div class="w-1/2">
-	<h1 class="text-center mb-10 text-slate-100 font-bold text-xl">Sign in to your account</h1>
+	<h1 class="text-center mb-10 text-slate-100 font-bold text-xl">{$t('login.title')}</h1>
 	<form on:submit|preventDefault={() => (promise = handleLogin())} class="flex flex-col">
-		<p class="text-slate-100 text-sm">Username</p>
+		<p class="text-slate-100 text-sm">{$t('username')}</p>
 		<input
 			bind:value={username}
 			class="mb-5 border rounded-md bg-gray-800 border-gray-700 p-1 text-slate-100"
 		/>
-		<p class="text-slate-100 text-sm">Password</p>
+		<p class="text-slate-100 text-sm">{$t('password')}</p>
 		<input
 			bind:value={password}
 			type="password"
 			class="mb-5 border rounded-md bg-gray-800 border-gray-700 p-1 text-slate-100"
 		/>
 		<button type="submit" class="text-slate-100 text-sm rounded-md p-1 bg-indigo-700"
-			>Sign in</button
+			>{$t('login.button')}</button
 		>
 	</form>
 </div>

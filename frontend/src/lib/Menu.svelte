@@ -2,7 +2,8 @@
 	import { slide } from 'svelte/transition';
 	import { goto, onNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { getUser } from './api';
+	import { changeLocale, getUser } from './api';
+	import { t, locale, locales, flagIcon } from './i18n';
 	import MenuButton from './MenuButton.svelte';
 	import passwordIcon from '$lib/assets/key.svg';
 	import logoutIcon from '$lib/assets/door.svg';
@@ -23,6 +24,7 @@
 	onMount(async () => {
 		const user = await getUser();
 		if (user === null) return;
+		$locale = user.locale;
 		is_admin = user.is_admin;
 	});
 
@@ -33,6 +35,13 @@
 
 	const menuInteract = () => {
 		menuOpened = !menuOpened;
+	};
+
+	const changeLocaleHandle = async () => {
+		const session = localStorage.getItem('session');
+		if (session === null) return;
+		$locale = locales[(locales.indexOf($locale) + 1) % locales.length];
+		changeLocale(session, $locale);
 	};
 </script>
 
@@ -60,20 +69,29 @@
 			transition:slide
 			class="flex flex-col w-full bg-slate-800 p-3 justify-between rounded-t-md"
 		>
-			<MenuButton icon={logoutIcon} onclick={logout} text="Log out" />
-			<MenuButton icon={passwordIcon} onclick={() => goto('/password')} text="Change password" />
+			<MenuButton icon={$flagIcon} onclick={changeLocaleHandle} text={$t('menu.language')} />
+			<MenuButton icon={logoutIcon} onclick={logout} text={$t('menu.logout')} />
+			<MenuButton
+				icon={passwordIcon}
+				onclick={() => goto('/password')}
+				text={$t('menu.password')}
+			/>
 			<MenuButton
 				icon={transactionsIcon}
 				onclick={() => goto('/transactions')}
-				text="Transactions"
+				text={$t('menu.transactions')}
 			/>
-			<MenuButton icon={transferIcon} onclick={() => goto('/transfer')} text="Transfer" />
-			<MenuButton icon={profileIcon} onclick={() => goto('/')} text="My profile" />
-			<MenuButton icon={usersIcon} onclick={() => goto('/users')} text="Leaderboard" />
+			<MenuButton
+				icon={transferIcon}
+				onclick={() => goto('/transfer')}
+				text={$t('menu.transfer')}
+			/>
+			<MenuButton icon={profileIcon} onclick={() => goto('/')} text={$t('menu.profile')} />
+			<MenuButton icon={usersIcon} onclick={() => goto('/users')} text={$t('menu.leaderboard')} />
 
 			{#if is_admin}
-				<MenuButton icon={createIcon} onclick={() => goto('/create')} text="Create user" />
-				<MenuButton icon={rewardIcon} onclick={() => goto('/reward')} text="Reward" />
+				<MenuButton icon={createIcon} onclick={() => goto('/create')} text={$t('menu.create')} />
+				<MenuButton icon={rewardIcon} onclick={() => goto('/reward')} text={$t('menu.reward')} />
 			{/if}
 		</nav>
 	{/if}

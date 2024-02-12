@@ -4,8 +4,8 @@ services:
   frontend:
     build: ./frontend
     environment:
-      - PUBLIC_SERVER_NAME=$SERVER_NAME
-      - PUBLIC_MODE=$MODE
+      - PUBLIC_SERVER_NAME=${SERVER_NAME}
+      - PUBLIC_MODE=${MODE}
     depends_on:
       - nginx
       - backend

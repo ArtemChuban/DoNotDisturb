@@ -5,6 +5,7 @@
 	import FetchStatus from '$lib/FetchStatus.svelte';
 	import { notification, NotificationType } from '$lib/store';
 	import UserSelect from '$lib/UserSelect.svelte';
+	import { t } from '$lib/i18n';
 
 	let session: string;
 	let user: User;
@@ -38,17 +39,18 @@
 </svelte:head>
 
 <div class="w-1/2">
-	<h1 class="text-center mb-10 text-slate-100 font-bold text-xl">Reward</h1>
+	<h1 class="text-center mb-10 text-slate-100 font-bold text-xl">{$t('reward.title')}</h1>
 	<form on:submit|preventDefault={() => (promise = handleReward())} class="flex flex-col">
-		<p class="text-slate-100 text-sm">Username</p>
+		<p class="text-slate-100 text-sm">{$t('username')}</p>
 		<UserSelect bind:username />
-		<p class="mt-3 text-slate-100 text-sm">Value</p>
+		<p class="mt-3 text-slate-100 text-sm">{$t('value')}</p>
 		<input
 			bind:value
 			type="number"
 			class="mb-5 border rounded-md bg-gray-800 border-gray-700 p-1 text-slate-100"
 		/>
-		<button type="submit" class="text-slate-100 text-sm rounded-md p-1 bg-indigo-700">Reward</button
+		<button type="submit" class="text-slate-100 text-sm rounded-md p-1 bg-indigo-700"
+			>{$t('reward.button')}</button
 		>
 	</form>
 </div>

@@ -7,6 +7,7 @@ export interface User {
 	username: string;
 	is_admin: boolean;
 	tokens: number;
+	locale: string;
 }
 
 enum TransactionType {
@@ -37,7 +38,7 @@ export const getUser: () => Promise<User> = async () => {
 	});
 	if (!response.ok) await throwError(response);
 
-	return await response.json();
+	return {...await response.json()};
 };
 
 export const getUserByUsername: (username: string) => Promise<User> = async (username: string) => {
@@ -136,3 +137,13 @@ export const reward = async (session: string, username: string, value: number) =
 	);
 	if (!response.ok) await throwError(response);
 };
+
+export const changeLocale = async (session: string, locale: string) => {
+	const response = await fetch(
+		`${BACKEND_URL}/users/locale?session=${session}&locale=${locale}`,
+		{
+			method: 'PUT'
+		}
+	);
+	if (!response.ok) await throwError(response);
+}

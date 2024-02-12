@@ -43,6 +43,7 @@ class UserView(BaseModel):
     username: str
     is_admin: bool = False
     tokens: int = 0
+    locale: str = "en"
 
 
 class User(UserView):
@@ -108,6 +109,14 @@ async def post_users_register(
 
     new_user = User(username=username, password=password)
     users_collection.insert_one(new_user.model_dump())
+
+
+@app.put("/users/locale")
+async def put_users_locale(session: str, locale: str) -> None:
+    user = get_user_by_session(session)
+    users_collection.update_one(
+        {"username": user.username}, {"$set": {"locale": locale}}
+    )
 
 
 @app.get("/users")

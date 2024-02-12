@@ -7,6 +7,7 @@
 	import Loader from '$lib/Loader.svelte';
 	import { writable } from 'svelte/store';
 	import { notification, NotificationType } from '$lib/store';
+	import { t } from '$lib/i18n';
 
 	let transactions: Array<Transaction> = [];
 	let initiator = writable('Any');
@@ -58,11 +59,11 @@
 </svelte:head>
 
 <div class="w-full h-full flex flex-col justify-start items-center">
-	<h1 class="text-2xl m-4 font-bold">Transactions</h1>
+	<h1 class="text-2xl m-4 font-bold">{$t('transactions.title')}</h1>
 	<div class="flex w-5/6 justify-around items-center mb-5">
-		<p class="mr-3">From</p>
+		<p class="mr-3">{$t('transactions.from')}</p>
 		<UserSelect bind:username={$initiator} additional={['Any']} />
-		<p class="mx-3">To</p>
+		<p class="mx-3">{$t('transactions.to')}</p>
 		<UserSelect bind:username={$reciever} additional={['Any']} />
 	</div>
 	<div
@@ -79,7 +80,7 @@
 			</div>
 		{:then}
 			{#if transactions.length === 0}
-				No transactions found
+				{$t('transactions.not_found')}
 			{/if}
 			{#if loadMoreButtonVisible}
 				<button
