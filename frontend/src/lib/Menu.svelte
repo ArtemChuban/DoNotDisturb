@@ -13,6 +13,8 @@
 	import createIcon from '$lib/assets/add.svg';
 	import rewardIcon from '$lib/assets/reward.svg';
 	import usersIcon from '$lib/assets/collaboration.svg';
+	import { session } from './user';
+	import { page } from '$app/stores';
 
 	let menuOpened = false;
 	let is_admin = false;
@@ -22,26 +24,20 @@
 	});
 
 	onMount(async () => {
-		const user = await getUser();
-		if (user === null) return;
-		$locale = user.locale;
-		is_admin = user.is_admin;
+		session.subscribe(async (value) => {
+			if (value === null) return;
+			const user = await getUser(value);
+			$locale = user.locale;
+			is_admin = user.is_admin;
+		});
 	});
-
-	const logout = () => {
-		localStorage.removeItem('session');
-		goto('/login');
-	};
-
-	const menuInteract = () => {
-		menuOpened = !menuOpened;
-	};
 
 	const changeLocaleHandle = async () => {
 		const session = localStorage.getItem('session');
-		if (session === null) return;
+		if (session !== null) {
+			changeLocale(session, $locale);
+		}
 		$locale = locales[(locales.indexOf($locale) + 1) % locales.length];
-		changeLocale(session, $locale);
 	};
 </script>
 
@@ -51,7 +47,7 @@
 		: 'bg-opacity-0'} w-full flex flex-col justify-end items-center absolute bottom-0"
 >
 	<button
-		on:click={menuInteract}
+		on:click={() => (menuOpened = !menuOpened)}
 		class="mb-4 w-12 h-12 bg-slate-800 rounded-full flex justify-center items-center"
 	>
 		<svg
@@ -70,28 +66,30 @@
 			class="flex flex-col w-full bg-slate-800 p-3 justify-between rounded-t-md"
 		>
 			<MenuButton icon={$flagIcon} onclick={changeLocaleHandle} text={$t('menu.language')} />
-			<MenuButton icon={logoutIcon} onclick={logout} text={$t('menu.logout')} />
-			<MenuButton
-				icon={passwordIcon}
-				onclick={() => goto('/password')}
-				text={$t('menu.password')}
-			/>
-			<MenuButton
-				icon={transactionsIcon}
-				onclick={() => goto('/transactions')}
-				text={$t('menu.transactions')}
-			/>
-			<MenuButton
-				icon={transferIcon}
-				onclick={() => goto('/transfer')}
-				text={$t('menu.transfer')}
-			/>
-			<MenuButton icon={profileIcon} onclick={() => goto('/')} text={$t('menu.profile')} />
-			<MenuButton icon={usersIcon} onclick={() => goto('/users')} text={$t('menu.leaderboard')} />
+			{#if $page.route.id !== '/login'}
+				<MenuButton icon={logoutIcon} onclick={() => ($session = null)} text={$t('menu.logout')} />
+				<MenuButton
+					icon={passwordIcon}
+					onclick={() => goto('/password')}
+					text={$t('menu.password')}
+				/>
+				<MenuButton
+					icon={transactionsIcon}
+					onclick={() => goto('/transactions')}
+					text={$t('menu.transactions')}
+				/>
+				<MenuButton
+					icon={transferIcon}
+					onclick={() => goto('/transfer')}
+					text={$t('menu.transfer')}
+				/>
+				<MenuButton icon={profileIcon} onclick={() => goto('/')} text={$t('menu.profile')} />
+				<MenuButton icon={usersIcon} onclick={() => goto('/users')} text={$t('menu.leaderboard')} />
 
-			{#if is_admin}
-				<MenuButton icon={createIcon} onclick={() => goto('/create')} text={$t('menu.create')} />
-				<MenuButton icon={rewardIcon} onclick={() => goto('/reward')} text={$t('menu.reward')} />
+				{#if is_admin}
+					<MenuButton icon={createIcon} onclick={() => goto('/create')} text={$t('menu.create')} />
+					<MenuButton icon={rewardIcon} onclick={() => goto('/reward')} text={$t('menu.reward')} />
+				{/if}
 			{/if}
 		</nav>
 	{/if}

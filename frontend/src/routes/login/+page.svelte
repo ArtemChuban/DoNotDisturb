@@ -2,14 +2,8 @@
 	import { goto } from '$app/navigation';
 	import FetchStatus from '$lib/FetchStatus.svelte';
 	import { getSession } from '$lib/api';
-	import { onMount } from 'svelte';
 	import { t } from '$lib/i18n';
-
-	onMount(() => {
-		if (localStorage.getItem('session') !== null) {
-			goto('/');
-		}
-	});
+	import { session } from '$lib/user';
 
 	let username = '';
 	let password = '';
@@ -17,8 +11,7 @@
 	let promise: Promise<void>;
 
 	const handleLogin = async () => {
-		const session = await getSession(username, password);
-		localStorage.setItem('session', session);
+		$session = await getSession(username, password);
 		goto('/');
 	};
 </script>

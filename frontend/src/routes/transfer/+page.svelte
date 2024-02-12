@@ -4,8 +4,9 @@
 	import { getAllUsers, transfer, type User } from '$lib/api';
 	import FetchStatus from '$lib/FetchStatus.svelte';
 	import UserSelect from '$lib/UserSelect.svelte';
-	import { notification, NotificationType } from '$lib/store';
+	import { notification, NotificationType } from '$lib/notification';
 	import { t } from '$lib/i18n';
+	import { session } from '$lib/user';
 
 	let username = '';
 	let value = '';
@@ -15,19 +16,12 @@
 	$: value = value.replace(/\D/g, '');
 
 	onMount(async () => {
-		const session = localStorage.getItem('session');
-		if (session === null) {
-			goto('/login');
-			return;
-		}
 		users = await getAllUsers();
 	});
 
 	const handleReward = async () => {
-		const session = localStorage.getItem('session');
-		if (session === null) throw new Error('Empty session');
-		console.log(username);
-		await transfer(session, username, +value);
+		if ($session === null) return;
+		await transfer($session, username, +value);
 		notification.set({
 			message: `${value} token${+value === 1 ? '' : 's'} transfered to ${username}`,
 			type: NotificationType.SUCCESS

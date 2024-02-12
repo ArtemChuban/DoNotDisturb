@@ -1,16 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getUser } from '$lib/api';
 	import { goto } from '$app/navigation';
+	import { username } from '$lib/user';
 
 	onMount(async () => {
-		getUser()
-			.then((user) => {
-				goto(`/user/${user.username}`);
-			})
-			.catch((err) => {
-				localStorage.removeItem('session');
-				goto('/login');
-			});
+		username.subscribe((value) => {
+			if (value === null) return;
+			goto(`/user/${value}`);
+		});
 	});
 </script>

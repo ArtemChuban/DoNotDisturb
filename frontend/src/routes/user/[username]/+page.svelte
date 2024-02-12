@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { getUserByUsername, type User } from '$lib/api';
-	import { notification, NotificationType } from '$lib/store';
+	import { notification, NotificationType } from '$lib/notification';
 	import { onMount } from 'svelte';
 	import { linear } from 'svelte/easing';
 	import { tweened } from 'svelte/motion';
-	import UserAvatar from '$lib/UserAvatar.svelte'
+	import UserAvatar from '$lib/UserAvatar.svelte';
 
 	interface Data {
 		username: string;
@@ -42,9 +42,9 @@
 			><wbr /></span
 		>
 	{:then user}
-	<div class="w-24 h-24 text-3xl mb-5">
-		<UserAvatar username={user.username}/>
-	</div>
+		<div class="w-24 h-24 text-3xl mb-5">
+			<UserAvatar username={user.username} />
+		</div>
 		<span class="{user.is_admin ? 'text-red-400' : ''} break-words w-full p-5 text-center"
 			>{user.username}</span
 		>

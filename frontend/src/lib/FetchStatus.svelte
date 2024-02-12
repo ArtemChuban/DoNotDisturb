@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Loader from './Loader.svelte';
-	import { notification, NotificationType } from '$lib/store';
+	import { notification, NotificationType } from '$lib/notification';
 
 	export let promise: Promise<void>;
 </script>

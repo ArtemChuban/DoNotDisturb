@@ -1,31 +1,27 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getUser, reward, type User } from '$lib/api';
+	import { getUser, reward } from '$lib/api';
 	import FetchStatus from '$lib/FetchStatus.svelte';
-	import { notification, NotificationType } from '$lib/store';
+	import { notification, NotificationType } from '$lib/notification';
 	import UserSelect from '$lib/UserSelect.svelte';
 	import { t } from '$lib/i18n';
+	import { session } from '$lib/user';
 
-	let session: string;
-	let user: User;
 	let username = '';
 	let value = '';
 	let promise: Promise<void>;
 
 	onMount(async () => {
-		const s = localStorage.getItem('session');
-		if (s === null) {
-			goto('/login');
-			return;
-		}
-		session = s;
-		user = await getUser();
-		if (!user.is_admin) goto('/');
+		session.subscribe(async (value) => {
+			if (value === null) return;
+			if (!(await getUser(value)).is_admin) goto('/');
+		});
 	});
 
 	const handleReward = async () => {
-		await reward(session, username, +value);
+		if ($session === null) return;
+		await reward($session, username, +value);
 		notification.set({
 			message: `${username} rewarded for ${value} token${+value === 1 ? '' : 's'}`,
 			type: NotificationType.SUCCESS

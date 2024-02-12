@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getAllUsers, type User } from '$lib/api';
+	import { getAllUsers } from '$lib/api';
 	import { onMount } from 'svelte';
 
 	export let username: string;

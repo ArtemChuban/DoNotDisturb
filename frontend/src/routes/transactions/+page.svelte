@@ -6,7 +6,7 @@
 	import TransactionComponent from '$lib/Transaction.svelte';
 	import Loader from '$lib/Loader.svelte';
 	import { writable } from 'svelte/store';
-	import { notification, NotificationType } from '$lib/store';
+	import { notification, NotificationType } from '$lib/notification';
 	import { t } from '$lib/i18n';
 
 	let transactions: Array<Transaction> = [];
@@ -18,7 +18,6 @@
 	let promise: Promise<void>;
 
 	const repopulateTransactions = async () => {
-		transactions = [];
 		transactions = await getTransactions(
 			0,
 			limit,
@@ -70,7 +69,7 @@
 		class="overflow-y-scroll overflow-x-hidden w-full flex flex-col justify-start items-center pt-1 mb-20"
 		bind:this={transactionsDiv}
 	>
-		{#each transactions as transaction}
+		{#each transactions as transaction (transaction.timestamp)}
 			<TransactionComponent {transaction} />
 		{/each}
 
@@ -91,7 +90,7 @@
 				</button>
 			{/if}
 		{:catch error}
-			{(notification.set({ message: String(error), type: NotificationType.ERROR }), '')}
+			{@const _ = (notification.set({ message: String(error), type: NotificationType.ERROR }), '')}
 		{/await}
 	</div>
 </div>

@@ -1,34 +1,30 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import FetchStatus from '$lib/FetchStatus.svelte';
-	import { createUser, getUser, type User } from '$lib/api';
+	import { createUser, getUser } from '$lib/api';
 	import { t } from '$lib/i18n';
-	import { NotificationType, notification } from '$lib/store';
+	import { NotificationType, notification } from '$lib/notification';
+	import { session } from '$lib/user';
 	import { onMount } from 'svelte';
 
-	let session: string;
-	let user: User;
 	let username = '';
 	let password = '';
 	let promise: Promise<void>;
 
 	onMount(async () => {
-		const s = localStorage.getItem('session');
-		if (s === null) {
-			goto('/login');
-			return;
-		}
-		session = s;
-		user = await getUser();
-		if (!user.is_admin) goto('/');
+		session.subscribe(async (value) => {
+			if (value === null) return;
+			if (!(await getUser(value)).is_admin) goto('/');
+		});
 	});
 
 	const handleCreate = async () => {
+		if ($session === null) return;
 		if (password.search(/\d/g) < 0) throw new Error('Password must contain digit');
 		if (password.search(/[a-z]/g) < 0) throw new Error('Password must contain lower letter');
 		if (password.search(/[A-Z]/g) < 0) throw new Error('Password must contain upper letter');
 
-		await createUser(session, username, password);
+		await createUser($session, username, password);
 		notification.set({
 			message: `Account \'${username}\' created`,
 			type: NotificationType.SUCCESS
