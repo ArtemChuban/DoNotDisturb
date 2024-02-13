@@ -33,11 +33,10 @@
 	});
 
 	const changeLocaleHandle = async () => {
-		const session = localStorage.getItem('session');
-		if (session !== null) {
-			changeLocale(session, $locale);
-		}
 		$locale = locales[(locales.indexOf($locale) + 1) % locales.length];
+		if ($session !== null) {
+			changeLocale($session, $locale);
+		}
 	};
 </script>
 
