@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import FetchStatus from '$lib/FetchStatus.svelte';
+	import PasswordInput from '$lib/PasswordInput.svelte';
 	import { getSession } from '$lib/api';
 	import { t } from '$lib/i18n';
 	import { session } from '$lib/user';
@@ -28,13 +29,8 @@
 			bind:value={username}
 			class="mb-5 border rounded-md bg-gray-800 border-gray-700 p-1 text-slate-100"
 		/>
-		<p class="text-slate-100 text-sm">{$t('password')}</p>
-		<input
-			bind:value={password}
-			type="password"
-			class="mb-5 border rounded-md bg-gray-800 border-gray-700 p-1 text-slate-100"
-		/>
-		<button type="submit" class="text-slate-100 text-sm rounded-md p-1 bg-indigo-700"
+		<PasswordInput bind:password />
+		<button type="submit" class="mt-5 text-slate-100 text-sm rounded-md p-1 bg-indigo-700"
 			>{$t('login.button')}</button
 		>
 	</form>
