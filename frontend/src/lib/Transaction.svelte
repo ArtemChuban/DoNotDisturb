@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { type Transaction } from '$lib/api';
 	import { fly } from 'svelte/transition';
+	import { t } from './i18n';
 
 	export let transaction: Transaction;
 </script>
@@ -13,7 +14,7 @@
 	<a href="/user/{transaction.initiator}" class="bg-slate-900 px-2 py-1 rounded-md"
 		>{transaction.initiator}</a
 	>
-	<div class="mx-1">{transaction.type.toLowerCase()}s</div>
+	<div class="mx-1">{$t(`transactions.${transaction.type.toLowerCase()}s`)}</div>
 	<a
 		href="/user/{transaction.reciever}"
 		class="bg-slate-900 px-2 py-1 rounded-md overflow-hidden max-w-1/4">{transaction.reciever}</a

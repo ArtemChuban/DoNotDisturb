@@ -24,6 +24,8 @@ export const dictionary: Dictionary = {
 		'transactions.from': 'From',
 		'transactions.to': 'To',
 		'transactions.not_found': 'No transactions found',
+		'transactions.rewards': 'rewards',
+		'transactions.transfers': 'transfers',
 
 		'transfer.title': 'Transfer',
 		'transfer.button': 'Send',
@@ -63,6 +65,8 @@ export const dictionary: Dictionary = {
 		'transactions.from': 'От',
 		'transactions.to': 'К',
 		'transactions.not_found': 'Транзакции не найдены',
+		'transactions.rewards': 'наградил',
+		'transactions.transfers': 'перевел',
 
 		'transfer.title': 'Перевести',
 		'transfer.button': 'Отправить',
