@@ -2,7 +2,7 @@ import uuid
 from fastapi import FastAPI, HTTPException, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
 from typing import Annotated
 from enum import Enum
@@ -57,6 +57,7 @@ class TransactionType(str, Enum):
 
 
 class Transaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: int
     initiator: str
     reciever: str

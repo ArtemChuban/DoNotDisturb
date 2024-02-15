@@ -3,12 +3,11 @@
 	import { onMount } from 'svelte';
 
 	export let username: string;
-	export let additional: Array<string> = [];
-	let usernames: Array<string> = [];
+	export let usernames: Array<string> = [];
 	let promise: Promise<void>;
 
 	const getUsernames = async () => {
-		usernames = [...(await getAllUsers()).map((user) => user.username), ...additional];
+		usernames = [...usernames, ...(await getAllUsers()).map((user) => user.username)];
 	};
 
 	onMount(async () => {

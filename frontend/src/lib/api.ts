@@ -16,6 +16,7 @@ enum TransactionType {
 }
 
 export interface Transaction {
+	id: string;
 	timestamp: number;
 	initiator: string;
 	reciever: string;

@@ -61,15 +61,15 @@
 	<h1 class="text-2xl m-4 font-bold">{$t('transactions.title')}</h1>
 	<div class="flex w-5/6 justify-around items-center mb-5">
 		<p class="mr-3">{$t('transactions.from')}</p>
-		<UserSelect bind:username={$initiator} additional={['Any']} />
+		<UserSelect bind:username={$initiator} usernames={['Any']} />
 		<p class="mx-3">{$t('transactions.to')}</p>
-		<UserSelect bind:username={$reciever} additional={['Any']} />
+		<UserSelect bind:username={$reciever} usernames={['Any']} />
 	</div>
 	<div
 		class="overflow-y-scroll overflow-x-hidden w-full flex flex-col justify-start items-center pt-1 mb-20"
 		bind:this={transactionsDiv}
 	>
-		{#each transactions as transaction (transaction.timestamp)}
+		{#each transactions as transaction (transaction.id)}
 			<TransactionComponent {transaction} />
 		{/each}
 
