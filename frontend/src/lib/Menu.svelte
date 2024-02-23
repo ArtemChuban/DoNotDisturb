@@ -47,7 +47,7 @@
 >
 	<button
 		on:click={() => (menuOpened = !menuOpened)}
-		class="mb-4 w-12 h-12 bg-slate-800 rounded-full flex justify-center items-center"
+		class="mb-4 w-12 h-12 bg-surface-900 border rounded-full flex justify-center items-center"
 	>
 		<svg
 			class="w-1/2 h-1/2 {menuOpened ? '-scale-y-100' : ''}"
@@ -62,7 +62,7 @@
 	{#if menuOpened}
 		<nav
 			transition:slide
-			class="flex flex-col w-full bg-slate-800 p-3 justify-between rounded-t-md"
+			class="flex flex-col w-full bg-surface-800 p-3 justify-between rounded-t-md"
 		>
 			<MenuButton icon={$flagIcon} onclick={changeLocaleHandle} text={$t('menu.language')} />
 			{#if $page.route.id !== '/login'}

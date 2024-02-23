@@ -28,7 +28,7 @@
 	<title>{data.username}</title>
 </svelte:head>
 
-<div class="flex flex-col items-center justify-center bg-slate-800 w-1/2 h-1/2 rounded-md">
+<div class="flex flex-col items-center justify-center w-1/2 h-1/2 card">
 	{#await userPromise}
 		<div
 			role="status"

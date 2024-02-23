@@ -25,7 +25,7 @@
 			<button
 				on:click={() => goto(`/user/${user.username}`)}
 				transition:fly={{ delay: id * 50, y: 50 }}
-				class="flex bg-slate-800 rounded-md w-full p-3 my-1 justify-between items-center text-center"
+				class="card flex rounded-md w-full p-3 my-1 justify-between items-center text-center"
 			>
 				<div class="w-1/3 h-full">
 					<div class="w-12 h-12">

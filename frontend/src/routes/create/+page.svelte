@@ -41,13 +41,9 @@
 <div class="w-1/2">
 	<h1 class="text-center mb-10 text-slate-100 font-bold text-xl">{$t('create.title')}</h1>
 	<form on:submit|preventDefault={() => (promise = handleCreate())} class="flex flex-col">
-		<p class="text-slate-100 text-sm">{$t('username')}</p>
-		<input
-			bind:value={username}
-			class="mb-5 border rounded-md bg-gray-800 border-gray-700 p-1 text-slate-100"
-		/>
+		<input bind:value={username} class="input mb-5 text-slate-100" placeholder={$t('username')} />
 		<PasswordInput bind:password />
-		<button type="submit" class="mt-5 text-slate-100 text-sm rounded-md p-1 bg-indigo-700"
+		<button type="submit" class="btn variant-filled-surface mt-5 text-sm"
 			>{$t('create.button')}</button
 		>
 	</form>

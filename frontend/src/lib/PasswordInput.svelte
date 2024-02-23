@@ -19,14 +19,9 @@
 	};
 </script>
 
-<p class="text-slate-100 text-sm">{$t(title)}</p>
-<div class="relative">
-	<input
-		bind:value={password}
-		{...{ type }}
-		class="border rounded-md bg-gray-800 border-gray-700 p-1 text-slate-100 w-full"
-	/>
-	<button on:click|preventDefault={toggleHandler} class="absolute right-0" type="button"
+<div class="w-full input-group input-group-divider grid-cols-[1fr_auto]">
+	<input bind:value={password} {...{ type }} class="input" placeholder={$t(title)} />
+	<button on:click|preventDefault={toggleHandler} class="" type="button"
 		><img class="w-8 h-8" src={icon} alt="" /></button
 	>
 </div>

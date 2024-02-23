@@ -83,7 +83,7 @@
 			{/if}
 			{#if loadMoreButtonVisible}
 				<button
-					class="flex w-5/6 bg-slate-800 rounded-md justify-center p-3 items-center relative"
+					class="btn flex w-5/6 bg-surface-800 rounded-md justify-center p-3 items-center relative"
 					on:click={() => (promise = getMoreTransactions())}
 				>
 					Load more

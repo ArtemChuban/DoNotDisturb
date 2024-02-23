@@ -18,7 +18,7 @@
 {#await promise}
 	<div class="bg-slate-800 p-1 rounded-md w-full animate-pulse"><wbr /></div>
 {:then}
-	<select class="bg-slate-800 p-1 rounded-md w-full" bind:value={username}>
+	<select class="select p-1 rounded-md w-full" bind:value={username}>
 		{#each usernames as username}
 			<option value={username}>{username}</option>
 		{/each}

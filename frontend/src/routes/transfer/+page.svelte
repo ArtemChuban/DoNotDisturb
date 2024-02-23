@@ -39,12 +39,8 @@
 	<form on:submit|preventDefault={() => (promise = handleReward())} class="flex flex-col">
 		<p class="text-slate-100 text-sm">{$t('username')}</p>
 		<UserSelect bind:username />
-		<p class="mt-3 text-slate-100 text-sm">{$t('value')}</p>
-		<input
-			bind:value
-			class="mb-5 border rounded-md bg-gray-800 border-gray-700 p-1 text-slate-100"
-		/>
-		<button type="submit" class="text-slate-100 text-sm rounded-md p-1 bg-indigo-700"
+		<input bind:value class="input my-5 text-slate-100" placeholder={$t('value')} />
+		<button type="submit" class="btn variant-filled-surface text-sm rounded-md"
 			>{$t('transfer.button')}</button
 		>
 	</form>

@@ -41,7 +41,7 @@
 	<title>Password</title>
 </svelte:head>
 
-<div class="w-1/2">
+<div class="w-2/3">
 	<h1 class="text-center mb-10 text-slate-100 font-bold text-xl">{$t('password.title')}</h1>
 	<form on:submit|preventDefault={() => (promise = handleChange())} class="flex flex-col">
 		{#if is_admin}
@@ -52,7 +52,7 @@
 			<PasswordInput bind:password title={'password.new'} />
 		</div>
 		<PasswordInput bind:password={confirm_password} title={'password.repeat'} />
-		<button type="submit" class="text-slate-100 text-sm rounded-md p-1 bg-indigo-700 mt-5"
+		<button type="submit" class="btn variant-filled-surface text-sm rounded-md mt-5"
 			>{$t('password.button')}</button
 		>
 	</form>
