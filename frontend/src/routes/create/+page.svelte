@@ -28,7 +28,7 @@
 
 		await createUser($session, username, password);
 		toastStore.trigger({
-			message: `Account \'${username}\' created`,
+			message: `Account '${username}' created`,
 			background: 'variant-filled-success'
 		});
 		goto('/');

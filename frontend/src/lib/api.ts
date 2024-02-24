@@ -1,4 +1,3 @@
-import { goto } from '$app/navigation';
 import { env } from '$env/dynamic/public';
 
 const BACKEND_URL = `http${env.PUBLIC_MODE === 'production' ? 's' : ''}://${env.PUBLIC_SERVER_NAME}/api`;

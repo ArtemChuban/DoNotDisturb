@@ -10,6 +10,6 @@
 	{#await promise}
 		<Loader />
 	{:catch error}
-		{@const _ = toastStore.trigger({ message: String(error), background: 'variant-filled-error' })}
+		{toastStore.trigger({ message: String(error), background: 'variant-filled-error' })}
 	{/await}
 </div>

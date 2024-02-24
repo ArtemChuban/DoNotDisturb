@@ -7,7 +7,7 @@ const flags: Record<string, string> = { en: usa, ru: russia };
 
 export const locales = Object.keys(dictionary);
 export const locale = writable(locales[0]);
-export let flagIcon = writable('');
+export const flagIcon = writable('');
 
 locale.subscribe((value) => {
 	flagIcon.set(flags[value]);

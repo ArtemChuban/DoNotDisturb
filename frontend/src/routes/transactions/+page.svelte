@@ -91,7 +91,7 @@
 				</button>
 			{/if}
 		{:catch error}
-			{@const _ = toastStore.trigger({
+			{toastStore.trigger({
 				message: String(error),
 				background: 'variant-filled-error'
 			})}

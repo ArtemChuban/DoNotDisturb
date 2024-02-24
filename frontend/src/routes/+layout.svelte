@@ -50,8 +50,10 @@
 	});
 </script>
 
+<Menu />
 <Toast position="t" />
-<div class="flex flex-col justify-center items-center h-[100dvh] text-slate-100 font-bold">
+<div
+	class="flex flex-col justify-center items-center h-[100dvh] text-slate-100 font-bold transition-transform"
+>
 	<slot />
-	<Menu />
 </div>
