@@ -1,6 +1,6 @@
 import os
 from contextlib import asynccontextmanager
-from typing import Annotated
+from typing import Annotated, Optional
 
 from app.controllers import transaction_controller, user_controller, token_controller
 from app.database import mongoClient
@@ -105,7 +105,7 @@ async def post_tokens_transfer(
 async def get_transactions(
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(gt=0)] = 8,
-    initiator: str = None,
-    reciever: str = None,
+    initiator: Optional[str] = None,
+    reciever: Optional[str] = None,
 ) -> list[Transaction]:
     return transaction_controller.get(offset, limit, initiator, reciever)

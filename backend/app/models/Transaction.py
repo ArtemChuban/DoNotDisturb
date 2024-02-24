@@ -2,7 +2,7 @@ import uuid
 
 from pydantic import BaseModel, Field
 
-from . import TransactionType
+from .TransactionType import TransactionType
 
 
 class Transaction(BaseModel):

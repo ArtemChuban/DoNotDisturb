@@ -1,4 +1,4 @@
-from . import UserView
+from .UserView import UserView
 
 
 class User(UserView):
