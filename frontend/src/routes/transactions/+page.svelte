@@ -6,8 +6,9 @@
 	import TransactionComponent from '$lib/Transaction.svelte';
 	import Loader from '$lib/Loader.svelte';
 	import { writable } from 'svelte/store';
-	import { notification, NotificationType } from '$lib/notification';
 	import { t } from '$lib/i18n';
+	import { getToastStore } from '@skeletonlabs/skeleton';
+	const toastStore = getToastStore();
 
 	let transactions: Array<Transaction> = [];
 	let initiator = writable('Any');
@@ -90,7 +91,10 @@
 				</button>
 			{/if}
 		{:catch error}
-			{@const _ = (notification.set({ message: String(error), type: NotificationType.ERROR }), '')}
+			{@const _ = toastStore.trigger({
+				message: String(error),
+				background: 'variant-filled-error'
+			})}
 		{/await}
 	</div>
 </div>

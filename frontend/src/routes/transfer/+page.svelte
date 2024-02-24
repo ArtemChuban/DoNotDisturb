@@ -4,9 +4,10 @@
 	import { getAllUsers, transfer, type User } from '$lib/api';
 	import FetchStatus from '$lib/FetchStatus.svelte';
 	import UserSelect from '$lib/UserSelect.svelte';
-	import { notification, NotificationType } from '$lib/notification';
 	import { t } from '$lib/i18n';
 	import { session } from '$lib/user';
+	import { getToastStore } from '@skeletonlabs/skeleton';
+	const toastStore = getToastStore();
 
 	let username = '';
 	let value = '';
@@ -22,9 +23,9 @@
 	const handleReward = async () => {
 		if ($session === null) return;
 		await transfer($session, username, +value);
-		notification.set({
+		toastStore.trigger({
 			message: `${value} token${+value === 1 ? '' : 's'} transfered to ${username}`,
-			type: NotificationType.SUCCESS
+			background: 'variant-filled-success'
 		});
 		goto('/');
 	};

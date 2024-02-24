@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { getToastStore } from '@skeletonlabs/skeleton';
 	import Loader from './Loader.svelte';
-	import { notification, NotificationType } from '$lib/notification';
+	const toastStore = getToastStore();
 
 	export let promise: Promise<void>;
 </script>
@@ -9,6 +10,6 @@
 	{#await promise}
 		<Loader />
 	{:catch error}
-		{@const _ = notification.set({ message: String(error), type: NotificationType.ERROR })}
+		{@const _ = toastStore.trigger({ message: String(error), background: 'variant-filled-error' })}
 	{/await}
 </div>

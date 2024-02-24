@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { getUserByUsername, type User } from '$lib/api';
-	import { notification, NotificationType } from '$lib/notification';
 	import { onMount } from 'svelte';
 	import { linear } from 'svelte/easing';
 	import { tweened } from 'svelte/motion';
 	import UserAvatar from '$lib/UserAvatar.svelte';
+	import { getToastStore } from '@skeletonlabs/skeleton';
+	const toastStore = getToastStore();
 
 	interface Data {
 		username: string;
@@ -58,6 +59,6 @@
 			><wbr /></span
 		>
 		<span role="status" class="mt-5 text-4xl bg-slate-700 w-1/2 rounded-md"><wbr /></span>
-		{(notification.set({ message: String(error), type: NotificationType.ERROR }), '')}
+		{(toastStore.trigger({ message: String(error), background: 'variant-filled-error' }), '')}
 	{/await}
 </div>

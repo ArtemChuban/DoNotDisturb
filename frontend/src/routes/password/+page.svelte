@@ -3,11 +3,12 @@
 	import FetchStatus from '$lib/FetchStatus.svelte';
 	import UserSelect from '$lib/UserSelect.svelte';
 	import { changePassword, getUser } from '$lib/api';
-	import { NotificationType, notification } from '$lib/notification';
 	import { onMount } from 'svelte';
 	import { t } from '$lib/i18n';
 	import { session } from '$lib/user';
 	import PasswordInput from '$lib/PasswordInput.svelte';
+	import { getToastStore } from '@skeletonlabs/skeleton';
+	const toastStore = getToastStore();
 
 	let is_admin = false;
 	let username = '';
@@ -32,7 +33,7 @@
 		if (password.search(/[A-Z]/g) < 0) throw new Error('Password must contain upper letter');
 
 		await changePassword($session, username, password);
-		notification.set({ message: 'Password changed', type: NotificationType.SUCCESS });
+		toastStore.trigger({ message: 'Password changed' });
 		goto('/');
 	};
 </script>

@@ -4,9 +4,10 @@
 	import PasswordInput from '$lib/PasswordInput.svelte';
 	import { createUser, getUser } from '$lib/api';
 	import { t } from '$lib/i18n';
-	import { NotificationType, notification } from '$lib/notification';
 	import { session } from '$lib/user';
 	import { onMount } from 'svelte';
+	import { getToastStore } from '@skeletonlabs/skeleton';
+	const toastStore = getToastStore();
 
 	let username = '';
 	let password = '';
@@ -26,9 +27,9 @@
 		if (password.search(/[A-Z]/g) < 0) throw new Error('Password must contain upper letter');
 
 		await createUser($session, username, password);
-		notification.set({
+		toastStore.trigger({
 			message: `Account \'${username}\' created`,
-			type: NotificationType.SUCCESS
+			background: 'variant-filled-success'
 		});
 		goto('/');
 	};

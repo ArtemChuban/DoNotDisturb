@@ -3,12 +3,13 @@
 	import { goto } from '$app/navigation';
 	import { getUser, reward } from '$lib/api';
 	import FetchStatus from '$lib/FetchStatus.svelte';
-	import { notification, NotificationType } from '$lib/notification';
 	import UserSelect from '$lib/UserSelect.svelte';
 	import { t } from '$lib/i18n';
 	import { session } from '$lib/user';
 	import { writable } from 'svelte/store';
 	import { fly } from 'svelte/transition';
+	import { getToastStore } from '@skeletonlabs/skeleton';
+	const toastStore = getToastStore();
 
 	let usernames = writable(new Set<string>());
 	let username = writable('');
@@ -42,9 +43,9 @@
 			if ($session === null) return;
 			await reward($session, username, +value);
 		});
-		notification.set({
+		toastStore.trigger({
 			message: `${Array.from($usernames)} rewarded for ${value} token${+value === 1 ? '' : 's'}`,
-			type: NotificationType.SUCCESS
+			background: 'variant-filled-success'
 		});
 		goto('/');
 	};
