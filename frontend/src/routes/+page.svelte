@@ -86,7 +86,7 @@
 
 	<div class="flex flex-col m-1 gap-4 overflow-scroll">
 		{#each teams as team (team.id)}
-			<button class="flex justify-between btn card p-4" on:click={() => goto(`/${team.name}`)}>
+			<button class="flex justify-between btn card p-4" on:click={() => goto(`/team`)}>
 				<span class="font-bold text-xl">{team.name}</span>
 				<div class="w-6 text-secondary-500"><FaArrowRight /></div>
 			</button>

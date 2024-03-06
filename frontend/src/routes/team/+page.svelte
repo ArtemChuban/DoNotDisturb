@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	// @ts-expect-error, no types for this module
 	import FaPaperPlane from 'svelte-icons/fa/FaPaperPlane.svelte';
@@ -14,8 +13,8 @@
 
 	const modalStore = getModalStore();
 
-	const teamName = $page.params.team;
-	const isAdmin = false;
+	const teamName = 'Team Name';
+	const isAdmin = true;
 	const username = 'user';
 
 	interface IUser {
