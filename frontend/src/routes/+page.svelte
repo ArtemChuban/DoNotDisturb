@@ -54,12 +54,26 @@
 		invites = invites;
 		teams = teams;
 	};
+
 	const handleInviteDeny = async (id: string) => {
 		invites.forEach((team, index) => {
 			if (team.id !== id) return;
 			invites.splice(index, 1);
 		});
 		invites = invites;
+	};
+
+	const handleCreateNewTeam = async () => {
+		modalStore.trigger({
+			type: 'prompt',
+			title: 'Create new team',
+			body: 'New team name',
+			valueAttr: { type: 'text', required: true },
+			response: (team_name: string) => {
+				if (!team_name) return;
+				teams = [...teams, { name: team_name, id: team_name }];
+			}
+		});
 	};
 </script>
 
@@ -72,10 +86,10 @@
 
 	<div class="flex flex-col m-1 gap-4 overflow-scroll">
 		{#each teams as team (team.id)}
-			<button class="flex justify-between btn card p-4"
-				><span class="font-bold text-xl">{team.name}</span>
-				<div class="w-6 text-secondary-500"><FaArrowRight /></div></button
-			>
+			<button class="flex justify-between btn card p-4" on:click={() => goto(`/${team.name}`)}>
+				<span class="font-bold text-xl">{team.name}</span>
+				<div class="w-6 text-secondary-500"><FaArrowRight /></div>
+			</button>
 		{/each}
 		{#each invites as invite (invite.id)}
 			<div class="flex justify-between items-center card p-4">
@@ -92,9 +106,9 @@
 				</div>
 			</div>
 		{/each}
-		<button class="flex justify-between font-bold btn card p-4"
-			><span>Create new team</span>
-			<div class="w-6 text-success-500"><FaPlus /></div></button
-		>
+		<button class="flex justify-between font-bold btn card p-4" on:click={handleCreateNewTeam}>
+			<span>Create new team</span>
+			<div class="w-6 text-success-500"><FaPlus /></div>
+		</button>
 	</div>
 </div>
