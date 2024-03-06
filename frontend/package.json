@@ -41,6 +41,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@floating-ui/dom": "1.6.3"
+		"@floating-ui/dom": "1.6.3",
+		"svelte-icons": "^2.1.0"
 	}
 }
