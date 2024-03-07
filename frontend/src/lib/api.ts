@@ -10,5 +10,5 @@ export const get_jwt_token: (username: string, password: string) => Promise<stri
 	password: string
 ) => {
 	randError();
-	return 'test-jwt-token';
+	return `test-jwt-token:${username}:${password}`;
 };

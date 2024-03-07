@@ -78,6 +78,7 @@
 </script>
 
 <div class="flex flex-col h-3/4 w-3/4 gap-4">
+	<div>If you see this, s3 works fine</div>
 	<div class="card flex justify-around items-center py-4">
 		<Avatar initials={username} />
 		<span class="text-md text-primary-500">{username}</span>
