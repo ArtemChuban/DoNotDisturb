@@ -49,10 +49,10 @@ jobs:
           cache-dependency-path: "./frontend/package-lock.json"
       - run: npm install
       - run: npm run build
-      - uses: nekitcorp/yandex-storage-website-action@v2
+      - uses: hannut91/aws-cli@v1.18.43
         with:
-          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          bucket: tokenapp-frontend
-          working-directory: ./frontend/build
-          clear: true
+          args: s3 cp --recursive ./frontend/build s3://tokenapp-frontend/
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ru-central1
