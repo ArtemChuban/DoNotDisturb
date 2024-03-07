@@ -1,13 +1,43 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { createAccount } from '$lib/api';
+	import { session } from '$lib/storage';
+	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { onMount } from 'svelte';
+
+	const toastStore = getToastStore();
 
 	let username = '';
 	let password = '';
 	let password_repeat = '';
 
+	onMount(() => {
+		if ($session !== null) goto('/');
+	});
+
 	const handleLogin = async () => {
-		console.log(username, password, password_repeat);
-		goto('/');
+		if (username.length < 1 || password.length < 1) {
+			toastStore.trigger({
+				message: "Login or password can't be empty",
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+		if (password !== password_repeat) {
+			toastStore.trigger({
+				message: 'Passwords must match',
+				background: 'variant-filled-error'
+			});
+			return;
+		}
+		createAccount(username, password)
+			.then((value) => {
+				$session = value;
+				goto('/');
+			})
+			.catch((error) => {
+				toastStore.trigger({ message: error, background: 'variant-filled-error' });
+			});
 	};
 </script>
 

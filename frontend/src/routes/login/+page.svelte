@@ -1,13 +1,18 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { get_jwt_token } from '$lib/api';
-	import { jwt_token } from '$lib/storage';
+	import { get_session_token } from '$lib/api';
+	import { session } from '$lib/storage';
 	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { onMount } from 'svelte';
 
 	const toastStore = getToastStore();
 
 	let username = '';
 	let password = '';
+
+	onMount(() => {
+		if ($session !== null) goto('/');
+	});
 
 	const handleLogin = () => {
 		if (username.length < 1 || password.length < 1) {
@@ -17,9 +22,9 @@
 			});
 			return;
 		}
-		get_jwt_token(username, password)
+		get_session_token(username, password)
 			.then((value) => {
-				$jwt_token = value;
+				$session = value;
 				goto('/');
 			})
 			.catch((error) => {
