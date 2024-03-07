@@ -49,10 +49,10 @@ jobs:
           cache-dependency-path: "./frontend/package-lock.json"
       - run: npm install
       - run: npm run build
-      - uses: aws-actions/configure-aws-credentials@v1
+      - uses: povetek/yandex-object-storage-action@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ru-central1
-          audience: storage.yandexcloud.net
-      - run: s3 --endpoint-url=https://storage.yandexcloud.net cp --recursive ./build s3://tokenapp-frontend/
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          bucket: tokenapp-frontend
+          path: ./frontend/build
+          clear: false
