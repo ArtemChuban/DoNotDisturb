@@ -49,12 +49,10 @@ jobs:
           cache-dependency-path: "./frontend/package-lock.json"
       - run: npm install
       - run: npm run build
-      - uses: keithweaver/aws-s3-github-action@v1.0.0
+      - uses: nekitcorp/yandex-storage-website-action@v2
         with:
-          command: cp
-          source: ./frontend/build
-          destination: s3://tokenapp-frontend
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: ru-central1
-          flags: --recursive
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          bucket: tokenapp-frontend
+          working-directory: build
+          clear: true
