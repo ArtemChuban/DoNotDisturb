@@ -44,7 +44,7 @@
 			type: 'prompt',
 			title: 'Transfer',
 			body: `Enter tokens value to transfer to ${member.username}`,
-			valueAttr: { type: 'number', required: true },
+			valueAttr: { type: 'number', required: true, min: 1 },
 			response: (value: number) => {
 				if (!value || $session === null) return;
 				const user_as_member = $currentTeam.members.find(
@@ -77,7 +77,7 @@
 			type: 'prompt',
 			title: 'Reward',
 			body: `Enter tokens value to reward ${member.username}`,
-			valueAttr: { type: 'number', required: true },
+			valueAttr: { type: 'number', required: true, min: 1 },
 			response: (value: number) => {
 				if (!value || $session === null) return;
 				reward($session, $currentTeam.id, member.id, value)
