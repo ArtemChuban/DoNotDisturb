@@ -108,3 +108,6 @@ jobs:
           revision-concurrency: 16
           revision-image-url: cr.yandex/${{ secrets.CR_REGISTRY }}/${{ secrets.CR_REPOSITORY }}:latest
           revision-execution-timeout: 10
+          revision-env: |
+            DATABASE=${{ secrets.YDB_DATABASE }}
+            ENDPOINT=${{ secrets.ENDPOINT }}
