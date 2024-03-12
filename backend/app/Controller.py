@@ -68,11 +68,11 @@ class Controller:
 
     def try_login(self, username: str, password: str) -> str:
         query = f"select id, password from Users where `username` = '{username}';"
-        result = self.__session_pool.retry_operation_sync(self.callee, query=query)[
-            0
-        ].rows[0]
-        hashed_password = result.password
+        result = self.__session_pool.retry_operation_sync(self.callee, query=query)
+        if len(result) == 0:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+        data = result[0].rows[0]
+        hashed_password = data.password
         if not verify_password(password, hashed_password):
             raise HTTPException(status.HTTP_401_UNAUTHORIZED)
-        user_id = result.id
-        return self.create_session(user_id)
+        return self.create_session(data.id)
