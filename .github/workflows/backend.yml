@@ -1,4 +1,4 @@
-name: Backend
+name: "Backend"
 
 run-name: ${{ github.event_name }} to ${{ github.ref_name }} by @${{ github.actor }}
 
@@ -88,7 +88,8 @@ jobs:
 
       - name: Login to Yandex Cloud Container Registry
         uses: yc-actions/yc-cr-login@v1
-        with: yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+        with:
+          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
 
       - name: Build docker image
         run: docker build -t cr.yandex/${{ secrets.CR_REGISTRY }}/${{ secrets.CR_REPOSITORY }}:latest .
