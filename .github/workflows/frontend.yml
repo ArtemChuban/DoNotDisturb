@@ -51,8 +51,8 @@ jobs:
       - run: npm run build
       - uses: povetek/yandex-object-storage-action@v3
         with:
-          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          bucket: ${{ secrets.BUCKET_NAME }}
+          access-key-id: ${{ secrets.YC_OS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.YC_OS_ACCESS_KEY_SECRET }}
+          bucket: ${{ secrets.YC_OS_BUCKET_NAME }}
           path: ./frontend/build
           clear: false

@@ -90,10 +90,10 @@ jobs:
       - name: Build docker image
         run: |
           cd ${{ env.path }}
-          docker build -t cr.yandex/${{ secrets.CR_REGISTRY }}/${{ secrets.CR_REPOSITORY }}:latest .
+          docker build -t cr.yandex/${{ secrets.YC_CR_ID }}/${{ secrets.YC_CR_REPOSITORY }}:latest .
 
       - name: Push docker image to Yandex Cloud Container Registry
-        run: docker push cr.yandex/${{ secrets.CR_REGISTRY }}/${{ secrets.CR_REPOSITORY }}:latest
+        run: docker push cr.yandex/${{ secrets.YC_CR_ID }}/${{ secrets.YC_CR_REPOSITORY }}:latest
 
       - name: Deploy Serverless Container
         uses: yc-actions/yc-sls-container-deploy@v2
@@ -101,13 +101,13 @@ jobs:
           yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
           container-name: tokenapp-backend
           folder-id: ${{ secrets.YC_FOLDER_ID }}
-          revision-service-account-id: ${{ secrets.SA_ID }}
+          revision-service-account-id: ${{ secrets.YC_SA_ID_BACKEND }}
           revision-cores: 1
           revision-memory: 128Mb
           revision-core-fraction: 100
           revision-concurrency: 16
-          revision-image-url: cr.yandex/${{ secrets.CR_REGISTRY }}/${{ secrets.CR_REPOSITORY }}:latest
+          revision-image-url: cr.yandex/${{ secrets.YC_CR_ID }}/${{ secrets.YC_CR_REPOSITORY }}:latest
           revision-execution-timeout: 10
           revision-env: |
-            DATABASE=${{ secrets.DATABASE }}
-            ENDPOINT=${{ secrets.ENDPOINT }}
+            DATABASE=${{ secrets.YDB_DATABASE }}
+            ENDPOINT=${{ secrets.YDB_ENDPOINT }}
