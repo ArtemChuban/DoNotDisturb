@@ -41,7 +41,7 @@ class Controller:
 
     def username_exist(self, username: str) -> bool:
         query = (
-            f"select count(*) as `count` from Users where `username` = '{username}';",
+            f"select count(*) as `count` from Users where `username` = '{username}';"
         )
         count = (
             self.__session_pool.retry_operation_sync(self.callee, query=query)[0]
@@ -54,10 +54,8 @@ class Controller:
         if self.username_exist(username):
             raise HTTPException(status.HTTP_409_CONFLICT)
         user = User(username=username, password=hash_password(password))
-        query = (
-            f"insert into Users (id, username, password) \
-            values ('{user.id}', '{user.username}', '{user.password}');",
-        )
+        query = f"insert into Users (id, username, password) \
+            values ('{user.id}', '{user.username}', '{user.password}');"
         self.__session_pool.retry_operation_sync(self.callee, query=query)
         return self.create_session(user.id)
 
