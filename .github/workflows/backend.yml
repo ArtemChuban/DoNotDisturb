@@ -109,5 +109,5 @@ jobs:
           revision-image-url: cr.yandex/${{ secrets.CR_REGISTRY }}/${{ secrets.CR_REPOSITORY }}:latest
           revision-execution-timeout: 10
           revision-env: |
-            DATABASE=${{ secrets.YDB_DATABASE }}
+            DATABASE=${{ secrets.DATABASE }}
             ENDPOINT=${{ secrets.ENDPOINT }}
