@@ -78,7 +78,7 @@ jobs:
           cd ${{ env.path }}
           poetry run mypy .
 
-  typing_mypy:
+  deploy:
     name: Checking static types with mypy
     runs-on: ubuntu-latest
     needs: [  typing_mypy, linting_black, linting_flake8 ]
