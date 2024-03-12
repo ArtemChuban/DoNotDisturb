@@ -20,9 +20,7 @@ class Controller:
         self.__driver = ydb.Driver(
             endpoint=endpoint,
             database=database,
-            credentials=ydb.iam.ServiceAccountCredentials.from_file(
-                "authorized_key.json"
-            ),
+            credentials=ydb.credentials_from_env_variables(),
         )
         self.__driver.wait(timeout=10, fail_fast=True)
         self.__session_pool = ydb.SessionPool(self.__driver)
