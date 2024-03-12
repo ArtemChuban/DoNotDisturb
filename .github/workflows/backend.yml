@@ -93,6 +93,7 @@ jobs:
           docker build -t cr.yandex/${{ secrets.YC_CR_ID }}/${{ secrets.YC_CR_REPOSITORY }}:latest .
 
       - name: Push docker image to Yandex Cloud Container Registry
+        timeout-minutes: 2  # Sometime docker push can stuck
         run: docker push cr.yandex/${{ secrets.YC_CR_ID }}/${{ secrets.YC_CR_REPOSITORY }}:latest
 
       - name: Deploy Serverless Container
