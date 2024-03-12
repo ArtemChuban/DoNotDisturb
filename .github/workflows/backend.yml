@@ -1,11 +1,7 @@
 name: "Backend"
 
-run-name: ${{ github.event_name }} to ${{ github.ref_name }} by @${{ github.actor }}
-
 on:
-  push:
-    paths:
-      - backend/**
+  push
 
 env:
   path: ./backend
@@ -79,7 +75,7 @@ jobs:
           poetry run mypy .
 
   deploy:
-    name: Checking static types with mypy
+    name: Deploy container to Yandex Cloud
     runs-on: ubuntu-latest
     needs: [  typing_mypy, linting_black, linting_flake8 ]
     steps:
@@ -92,7 +88,9 @@ jobs:
           yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
 
       - name: Build docker image
-        run: docker build -t cr.yandex/${{ secrets.CR_REGISTRY }}/${{ secrets.CR_REPOSITORY }}:latest .
+        run: |
+          cd ${{ env.path }}
+          docker build -t cr.yandex/${{ secrets.CR_REGISTRY }}/${{ secrets.CR_REPOSITORY }}:latest .
 
       - name: Push docker image to Yandex Cloud Container Registry
         run: docker push cr.yandex/${{ secrets.CR_REGISTRY }}/${{ secrets.CR_REPOSITORY }}:latest
