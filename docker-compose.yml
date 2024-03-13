@@ -7,6 +7,16 @@ services:
     ports:
       - "80:80"
 
+  backend:
+    build:
+      context: ./backend
+    depends_on:
+      - database
+    environment:
+      - ENDPOINT=${ENDPOINT}
+      - DATABASE=${DATABASE}
+      - YDB_ANONYMOUS_CREDENTIALS=1
+
   database:
     image: cr.yandex/yc/yandex-docker-local-ydb:latest
     ports:
