@@ -23,7 +23,7 @@ async def post_users(
     username: Annotated[str, Body(embed=True)],
     password: Annotated[str, Body(embed=True)],
 ) -> str:
-    return controller.try_register(username, password)
+    return controller.register(username, password)
 
 
 @app.post("/users/session")
@@ -31,7 +31,7 @@ async def post_users_session(
     username: Annotated[str, Body(embed=True)],
     password: Annotated[str, Body(embed=True)],
 ) -> str:
-    return controller.try_login(username, password)
+    return controller.login(username, password)
 
 
 @app.post("/teams")
@@ -39,7 +39,7 @@ async def post_team(
     session: Annotated[str, Header()],
     name: Annotated[str, Body(embed=True)],
 ) -> str:
-    return controller.try_create_team(session, name)
+    return controller.create_team(session, name)
 
 
 @app.post("/teams/invite")
@@ -48,7 +48,7 @@ async def post_team_invite(
     team_id: Annotated[str, Body(embed=True)],
     username: Annotated[str, Body(embed=True)],
 ) -> None:
-    controller.try_invite(session, team_id, username)
+    controller.invite(session, team_id, username)
 
 
 if __name__ == "__main__":
