@@ -55,6 +55,14 @@ class Controller:
             raise HTTPException(status.HTTP_409_CONFLICT)
         self.__invite(user_id, team_id)
 
+    def invite_reply(self, session: str, team_id: str, accepted: bool) -> None:
+        user_id = self.__get_user_id_by_session(session)
+        if not self.__invite_exist(user_id, team_id):
+            raise HTTPException(status.HTTP_404_NOT_FOUND)
+        self.__remove_invite(user_id, team_id)
+        if accepted:
+            self.__add_member(user_id, team_id)
+
     @staticmethod
     def __callee(session: ydb.Session, query: str):
         return session.transaction().execute(
@@ -72,6 +80,21 @@ class Controller:
             values ('{user_id}', '{username}', '{hashed_password}');"
         self.__session_pool.retry_operation_sync(self.__callee, query=query)
         return user_id
+
+    def __invite_exist(self, user_id: str, team_id: str) -> bool:
+        query = f"select count(*) as `count` from Invites \
+                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
+        count = (
+            self.__session_pool.retry_operation_sync(self.__callee, query=query)[0]
+            .rows[0]
+            .count
+        )
+        return count > 0
+
+    def __remove_invite(self, user_id: str, team_id: str) -> None:
+        query = f"delete from Invites \
+                where `user_id` = '{user_id}' and `team_id` = '{team_id}'"
+        self.__session_pool.retry_operation_sync(self.__callee, query=query)
 
     def __get_user_id_by_username_and_password(
         self, username: str, password: str

@@ -51,5 +51,14 @@ async def post_team_invite(
     controller.invite(session, team_id, username)
 
 
+@app.post("/teams/invite/reply")
+async def post_teams_invite_reply(
+    session: Annotated[str, Header()],
+    team_id: Annotated[str, Body(embed=True)],
+    accepted: Annotated[bool, Body(embed=True)],
+):
+    controller.invite_reply(session, team_id, accepted)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
