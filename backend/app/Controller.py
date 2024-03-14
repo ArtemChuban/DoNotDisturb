@@ -71,6 +71,13 @@ class Controller:
             raise HTTPException(status.HTTP_403_FORBIDDEN)
         self.__change_tokens(user_id, team_id, value)
 
+    def transfer(self, session: str, team_id: str, user_id: str, value: int) -> None:
+        if value <= 0:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST)
+        initiator_id = self.__get_user_id_by_session(session)
+        self.__change_tokens(initiator_id, team_id, -value)
+        self.__change_tokens(user_id, team_id, value)
+
     @staticmethod
     def __callee(session: ydb.Session, query: str):
         return session.transaction().execute(

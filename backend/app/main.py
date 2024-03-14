@@ -70,5 +70,15 @@ async def post_reward(
     controller.reward(session, team_id, user_id, value)
 
 
+@app.post("/transfer")
+async def post_transfer(
+    session: Annotated[str, Header()],
+    team_id: Annotated[str, Body(embed=True)],
+    user_id: Annotated[str, Body(embed=True)],
+    value: Annotated[int, Body(embed=True, gt=0)],
+):
+    controller.transfer(session, team_id, user_id, value)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
