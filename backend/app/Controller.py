@@ -63,6 +63,14 @@ class Controller:
         if accepted:
             self.__add_member(user_id, team_id)
 
+    def reward(self, session: str, team_id: str, user_id: str, value: int) -> None:
+        if value <= 0:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST)
+        initiator_id = self.__get_user_id_by_session(session)
+        if not self.__user_is_admin(initiator_id, team_id):
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
+        self.__change_tokens(user_id, team_id, value)
+
     @staticmethod
     def __callee(session: ydb.Session, query: str):
         return session.transaction().execute(
@@ -72,6 +80,26 @@ class Controller:
             .with_timeout(3)
             .with_operation_timeout(2),
         )
+
+    def __change_tokens(self, user_id: str, team_id: str, value: int) -> None:
+        old_tokens = self.__get__tokens(user_id, team_id)
+        new_tokens = old_tokens + value
+        if new_tokens < 0:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST)
+        query = f"update Membership \
+                set `tokens` = `tokens` + {value} \
+                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
+        self.__session_pool.retry_operation_sync(self.__callee, query=query)
+
+    def __get__tokens(self, user_id: str, team_id: str) -> int:
+        query = f"select tokens from Membership \
+                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
+        rows = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
+            0
+        ].rows
+        if len(rows) == 0:
+            raise HTTPException(status.HTTP_404_NOT_FOUND)
+        return rows[0].tokens
 
     def __create_user(self, username: str, password: str) -> str:
         hashed_password = hash_password(password)
