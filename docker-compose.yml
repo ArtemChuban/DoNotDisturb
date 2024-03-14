@@ -10,25 +10,9 @@ services:
   backend:
     build:
       context: ./backend
-    depends_on:
-      - database
+    ports:
+      - "8000:8000"
     environment:
       - ENDPOINT=${ENDPOINT}
       - DATABASE=${DATABASE}
-      - YDB_ANONYMOUS_CREDENTIALS=1
-
-  database:
-    image: cr.yandex/yc/yandex-docker-local-ydb:latest
-    ports:
-      - "2135:2135"
-      - "8765:8765"
-      - "2136:2136"
-    volumes:
-      - "./ydb/ydb_certs:/ydb_certs"
-      - "./ydb/ydb_data:/ydb_data"
-    environment:
-      - YDB_DEFAULT_LOG_LEVEL=NOTICE
-      - GRPC_TLS_PORT=2135
-      - GRPC_PORT=2136
-      - MON_PORT=8765
-      - YDB_USE_IN_MEMORY_PDISKS=true
+      - YDB_SERVICE_ACCOUNT_KEY_FILE_CREDENTIALS=${YDB_SERVICE_ACCOUNT_KEY_FILE_CREDENTIALS}
