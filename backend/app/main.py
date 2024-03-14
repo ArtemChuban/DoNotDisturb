@@ -1,10 +1,10 @@
+import os
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 import uvicorn
-from fastapi import Body, FastAPI, Header
-from contextlib import asynccontextmanager
 from Controller import Controller
-import os
+from fastapi import Body, FastAPI, Header
 from schemas import UserInfo
 
 

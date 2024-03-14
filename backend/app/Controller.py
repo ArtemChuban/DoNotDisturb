@@ -1,9 +1,10 @@
-import ydb  # type: ignore
-import uuid
-from fastapi import HTTPException, status
-from utils import hash_password, verify_password
 import os
-from schemas import UserInfo, TeamInfo
+import uuid
+
+import ydb  # type: ignore
+from fastapi import HTTPException, status
+from schemas import TeamInfo, UserInfo
+from utils import hash_password, verify_password
 
 
 class Controller:
