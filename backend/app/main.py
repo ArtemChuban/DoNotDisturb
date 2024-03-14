@@ -42,5 +42,14 @@ async def post_team(
     return controller.try_create_team(session, name)
 
 
+@app.post("/teams/invite")
+async def post_team_invite(
+    session: Annotated[str, Header()],
+    team_id: Annotated[str, Body(embed=True)],
+    username: Annotated[str, Body(embed=True)],
+) -> None:
+    controller.try_invite(session, team_id, username)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8000")))

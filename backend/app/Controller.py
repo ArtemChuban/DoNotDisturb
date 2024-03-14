@@ -50,6 +50,15 @@ class Controller:
         )
         return count > 0
 
+    def get_user_id_by_username(self, username: str) -> bool:
+        query = f"select `id` from Users where `username` = '{username}';"
+        rows = self.__session_pool.retry_operation_sync(self.callee, query=query)[
+            0
+        ].rows
+        if len(rows) == 0:
+            raise HTTPException(status.HTTP_404_NOT_FOUND)
+        return rows[0].id
+
     def team_name_exist(self, name: str) -> bool:
         query = f"select count(*) as `count` from Teams where `name` = '{name}';"
         count = (
@@ -92,6 +101,16 @@ class Controller:
         self.__session_pool.retry_operation_sync(self.callee, query=query)
         return team_id
 
+    def member_exist(self, user_id: str, team_id: str) -> bool:
+        query = f"select count(*) as `count` from Membership \
+                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
+        count = (
+            self.__session_pool.retry_operation_sync(self.callee, query=query)[0]
+            .rows[0]
+            .count
+        )
+        return count > 0
+
     def add_member(self, user_id: str, team_id: str, is_admin: bool = False) -> None:
         query = f"insert into Membership (user_id, team_id, is_admin, tokens) \
                 values ('{user_id}', '{team_id}', {is_admin}, 0);"
@@ -115,3 +134,28 @@ class Controller:
         team_id = self.create_team(user_id, name)
         self.add_member(user_id, team_id, is_admin=True)
         return team_id
+
+    def user_is_admin(self, user_id: str, team_id: str) -> bool:
+        query = f"select `is_admin` from Membership \
+                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
+        rows = self.__session_pool.retry_operation_sync(self.callee, query=query)[
+            0
+        ].rows
+        if len(rows) == 0:
+            raise HTTPException(status.HTTP_404_NOT_FOUND)
+        return rows[0].is_admin
+
+    def invite(self, user_id: str, team_id: str) -> None:
+        query = (
+            f"insert into Invites (user_id, team_id) values ('{user_id}', '{team_id}');"
+        )
+        self.__session_pool.retry_operation_sync(self.callee, query=query)
+
+    def try_invite(self, session: str, team_id: str, username: str) -> None:
+        initiator_id = self.get_user_id_by_session(session)
+        if not self.user_is_admin(initiator_id, team_id):
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
+        user_id = self.get_user_id_by_session(username)
+        if self.member_exist(user_id, team_id):
+            raise HTTPException(status.HTTP_409_CONFLICT)
+        self.invite(user_id, team_id)
