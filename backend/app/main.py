@@ -5,6 +5,7 @@ from fastapi import Body, FastAPI, Header
 from contextlib import asynccontextmanager
 from Controller import Controller
 import os
+from schemas import UserInfo
 
 
 @asynccontextmanager
@@ -78,6 +79,13 @@ async def post_transfer(
     value: Annotated[int, Body(embed=True, gt=0)],
 ):
     controller.transfer(session, team_id, user_id, value)
+
+
+@app.get("/users")
+async def get_users(
+    session: Annotated[str, Header()],
+) -> UserInfo:
+    return controller.get_user(session)
 
 
 if __name__ == "__main__":

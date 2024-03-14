@@ -3,6 +3,7 @@ import uuid
 from fastapi import HTTPException, status
 from utils import hash_password, verify_password
 import os
+from schemas import UserInfo, TeamInfo
 
 
 class Controller:
@@ -27,6 +28,13 @@ class Controller:
     def stop(self) -> None:
         self.__session_pool.stop()
         self.__driver.stop()
+
+    def get_user(self, session: str) -> UserInfo:
+        user_id = self.__get_user_id_by_session(session)
+        username = self.__get_username_by_id(user_id)
+        teams = self.__get_teams_info_by_user_id(user_id)
+        invites = self.__get_invites_info_by_user_id(user_id)
+        return UserInfo(username=username, teams=teams, invites=invites)
 
     def register(self, username: str, password: str) -> str:
         if self.__username_exist(username):
@@ -130,6 +138,33 @@ class Controller:
         query = f"delete from Invites \
                 where `user_id` = '{user_id}' and `team_id` = '{team_id}'"
         self.__session_pool.retry_operation_sync(self.__callee, query=query)
+
+    def __get_teams_info_by_user_id(self, user_id: str) -> list[TeamInfo]:
+        query = f"select Teams.name as name, Membership.team_id as id \
+                from Membership inner join Teams on Membership.team_id = Teams.id \
+                where `user_id` = '{user_id}';"
+        teams = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
+            0
+        ].rows
+        return [TeamInfo(name=team.name, id=team.id) for team in teams]
+
+    def __get_invites_info_by_user_id(self, user_id: str) -> list[TeamInfo]:
+        query = f"select Teams.name as name, Invites.team_id as id \
+                from Invites inner join Teams on Invites.team_id = Teams.id \
+                where `user_id` = '{user_id}';"
+        teams = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
+            0
+        ].rows
+        return [TeamInfo(name=team.name, id=team.id) for team in teams]
+
+    def __get_username_by_id(self, user_id: str) -> str:
+        query = f"select username from Users where `id` = '{user_id}';"
+        users = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
+            0
+        ].rows
+        if len(users) == 0:
+            raise HTTPException(status.HTTP_404_NOT_FOUND)
+        return users[0].username
 
     def __get_user_id_by_username_and_password(
         self, username: str, password: str
