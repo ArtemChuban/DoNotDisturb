@@ -274,12 +274,18 @@ class Controller:
                 Users.id as id, \
                 Users.username as username, \
                 Membership.is_admin as is_admin \
+                Membership.tokens as tokens \
                 from Membership inner join Users on Membership.user_id = Users.id \
                 where `team_id` = '{team_id}';"
         users = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
             0
         ].rows
         return [
-            MemberInfo(id=user.id, username=user.username, is_admin=user.is_admin)
+            MemberInfo(
+                id=user.id,
+                username=user.username,
+                is_admin=user.is_admin,
+                tokens=user.tokens,
+            )
             for user in users
         ]

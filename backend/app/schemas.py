@@ -16,3 +16,4 @@ class MemberInfo(BaseModel):
     id: str
     username: str
     is_admin: bool
+    tokens: int
