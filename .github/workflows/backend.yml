@@ -87,14 +87,15 @@ jobs:
         with:
           yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
 
-      - name: Build docker image
-        run: |
-          cd ${{ env.path }}
-          docker build -t cr.yandex/${{ secrets.YC_CR_ID }}/${{ secrets.YC_CR_REPOSITORY }}:latest .
-
-      - name: Push docker image to Yandex Cloud Container Registry
-        timeout-minutes: 2  # Sometime docker push can stuck
-        run: docker push cr.yandex/${{ secrets.YC_CR_ID }}/${{ secrets.YC_CR_REPOSITORY }}:latest
+      - name: Build and push
+        timeout-minutes: 3  # Sometime docker push can stuck
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: "cr.yandex/${{ secrets.secrets.YC_CR_ID }}/${{ secrets.YC_CR_REPOSITORY }}:latest"
+          cache-from: type=gha
+          cache-to: type=gha
 
       - name: Deploy Serverless Container
         uses: yc-actions/yc-sls-container-deploy@v2
