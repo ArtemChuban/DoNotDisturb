@@ -5,6 +5,7 @@ from typing import Annotated
 import uvicorn
 from Controller import Controller
 from fastapi import Body, FastAPI, Header
+from fastapi.middleware.cors import CORSMiddleware
 from schemas import UserInfo
 
 
@@ -16,6 +17,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(debug=True, lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 controller = Controller()
 
 
