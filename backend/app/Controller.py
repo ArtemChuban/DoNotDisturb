@@ -273,7 +273,7 @@ class Controller:
         query = f"select \
                 Users.id as id, \
                 Users.username as username, \
-                Membership.is_admin as is_admin \
+                Membership.is_admin as is_admin, \
                 Membership.tokens as tokens \
                 from Membership inner join Users on Membership.user_id = Users.id \
                 where `team_id` = '{team_id}';"
