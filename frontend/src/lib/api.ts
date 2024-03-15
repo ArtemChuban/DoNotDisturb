@@ -83,9 +83,8 @@ export const getMembers: (session: string, team_id: string) => Promise<Array<IMe
 	session: string,
 	team_id: string
 ) => {
-	const response = await fetch(`${ENDPOINT}/teams/members`, {
-		body: JSON.stringify({ team_id: team_id }),
-		method: 'POST',
+	const response = await fetch(`${ENDPOINT}/teams/${team_id}/members`, {
+		method: 'GET',
 		headers: { 'Content-Type': 'application/json', session: session }
 	});
 	if (!response.ok) {

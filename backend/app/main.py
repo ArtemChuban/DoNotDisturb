@@ -51,10 +51,10 @@ async def post_team(
     return controller.create_team(session, name)
 
 
-@app.post("/teams/members")
+@app.get("/teams/{team_id}/members")
 async def get_team_members(
     session: Annotated[str, Header()],
-    team_id: Annotated[str, Body(embed=True)],
+    team_id: str,
 ) -> list[MemberInfo]:
     return controller.get_members(session, team_id)
 
