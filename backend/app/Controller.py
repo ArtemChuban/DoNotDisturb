@@ -3,7 +3,7 @@ import uuid
 
 import ydb  # type: ignore
 from fastapi import HTTPException, status
-from schemas import TeamInfo, UserInfo
+from schemas import MemberInfo, TeamInfo, UserInfo
 from utils import hash_password, verify_password
 
 
@@ -36,6 +36,9 @@ class Controller:
         teams = self.__get_teams_info_by_user_id(user_id)
         invites = self.__get_invites_info_by_user_id(user_id)
         return UserInfo(username=username, teams=teams, invites=invites)
+
+    def get_members(self, session: str, team_id: str) -> list[MemberInfo]:
+        return self.__get_members(team_id)
 
     def register(self, username: str, password: str) -> str:
         if self.__username_exist(username):
@@ -265,3 +268,18 @@ class Controller:
             f"insert into Invites (user_id, team_id) values ('{user_id}', '{team_id}');"
         )
         self.__session_pool.retry_operation_sync(self.__callee, query=query)
+
+    def __get_members(self, team_id: str) -> list[MemberInfo]:
+        query = f"select \
+                Users.id as id, \
+                Users.username as username, \
+                Membership.is_admin as is_admin \
+                from Membership inner join Users on Membership.user_id = Users.id \
+                where `team_id` = '{team_id}';"
+        users = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
+            0
+        ].rows
+        return [
+            MemberInfo(id=user.id, username=user.username, is_admin=user.is_admin)
+            for user in users
+        ]

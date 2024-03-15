@@ -6,7 +6,7 @@ import uvicorn
 from Controller import Controller
 from fastapi import Body, FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
-from schemas import UserInfo
+from schemas import MemberInfo, UserInfo
 
 
 @asynccontextmanager
@@ -49,6 +49,14 @@ async def post_team(
     name: Annotated[str, Body(embed=True)],
 ) -> str:
     return controller.create_team(session, name)
+
+
+@app.post("/teams/members")
+async def get_team_members(
+    session: Annotated[str, Header()],
+    team_id: Annotated[str, Body(embed=True)],
+) -> list[MemberInfo]:
+    return controller.get_members(session, team_id)
 
 
 @app.post("/teams/invite")
