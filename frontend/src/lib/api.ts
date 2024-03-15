@@ -57,9 +57,9 @@ export const getUser: (session: string) => Promise<IUser> = async (session: stri
 	if (!response.ok) {
 		throw new Error((await response.json()).detail);
 	}
-	const data = await response.json()
-	data.invites.forEach((team: ITeam) => team.members = new Array());
-	data.teams.forEach((team: ITeam) => team.members = new Array());
+	const data = await response.json();
+	data.invites.forEach((team: ITeam) => (team.members = []));
+	data.teams.forEach((team: ITeam) => (team.members = []));
 	return data;
 };
 
