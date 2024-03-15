@@ -18,6 +18,7 @@
 
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
+	let isAdmin = false;
 
 	onMount(async () => {
 		if ($currentTeam.members.length > 0) return;
@@ -32,6 +33,9 @@
 		getMembers($session, $currentTeam.id)
 			.then((members) => {
 				$currentTeam.members = members.sort((a, b) => b.tokens - a.tokens);
+				members.forEach((member) => {
+					if (member.username === $user.username) isAdmin = member.is_admin;
+				});
 			})
 			.catch((error) => {
 				toastStore.trigger({ message: error, background: 'variant-filled-error' });
@@ -147,7 +151,7 @@
 							<FaPaperPlane />
 						</button>
 					{/if}
-					{#if $user.isAdmin}
+					{#if isAdmin}
 						<button class="btn btn-icon w-6 text-success-500" on:click={() => handleReward(member)}>
 							<FaAward />
 						</button>
@@ -155,7 +159,7 @@
 				</div>
 			</div>
 		{/each}
-		{#if $user.isAdmin}
+		{#if isAdmin}
 			<button class="flex justify-between font-bold btn card p-4" on:click={handleInvite}>
 				<span>Invite team member</span>
 				<div class="w-6 text-success-500"><FaPlus /></div>
