@@ -19,7 +19,7 @@
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
 	let isAdmin = false;
-	let loading = true;
+	let loading = false;
 
 	onMount(async () => {
 		if ($currentTeam.members.length > 0) return;
@@ -31,6 +31,7 @@
 			goto('/');
 			return;
 		}
+		loading = true;
 		getMembers($session, $currentTeam.id)
 			.then((members) => {
 				$currentTeam.members = members.sort((a, b) => b.tokens - a.tokens);
