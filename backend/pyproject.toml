@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "app"
+version = "0.1.0"
+description = ""
+authors = ["ArtemChuban <ArtemChuban@yandex.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+ydb = {extras = ["yc"], version = "^3.8.1"}
+fastapi = "^0.110.0"
+uvicorn = "^0.28.0"
+bcrypt = "^4.1.2"
+pyjwt = "^2.8.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.2.0"
+flake8 = "^7.0.0"
+flake8-pyproject = "^1.2.3"
+mypy = "^1.9.0"
+isort = "^5.13.2"
+
+[tool.flake8]
+max-line-length = 88
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

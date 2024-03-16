@@ -1,25 +1,22 @@
 import os
 from contextlib import asynccontextmanager
-from typing import Annotated, Optional
+from typing import Annotated
 
-from app.controllers import transaction_controller, user_controller, token_controller
-from app.database import mongoClient
-from app.models import Transaction, UserView
-from fastapi import FastAPI, Query, HTTPException, status
+import uvicorn
+from Controller import Controller
+from fastapi import Body, FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from schemas import MemberInfo, UserInfo
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    user_controller.check_admin_exist()
+    controller.start()
     yield
-    # Shutdown
-    ...
+    controller.stop()
 
 
-app = FastAPI(debug=os.environ["MODE"] == "local", lifespan=lifespan, root_path="/api")
+app = FastAPI(debug=True, lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,85 +24,85 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+controller = Controller()
 
 
-@app.get("/", include_in_schema=False)
-async def get_root() -> RedirectResponse:
-    return RedirectResponse("/api/docs")
+@app.post("/users")
+async def post_users(
+    username: Annotated[str, Body(embed=True)],
+    password: Annotated[str, Body(embed=True)],
+) -> str:
+    return controller.register(username, password)
 
 
-@app.post("/users/create")
-async def post_users_register(
-    session: str, username: Annotated[str, Query(min_length=1)], password: str
+@app.post("/users/session")
+async def post_users_session(
+    username: Annotated[str, Body(embed=True)],
+    password: Annotated[str, Body(embed=True)],
+) -> str:
+    return controller.login(username, password)
+
+
+@app.post("/teams")
+async def post_team(
+    session: Annotated[str, Header()],
+    name: Annotated[str, Body(embed=True)],
+) -> str:
+    return controller.create_team(session, name)
+
+
+@app.get("/teams/{team_id}/members")
+async def get_team_members(
+    session: Annotated[str, Header()],
+    team_id: str,
+) -> list[MemberInfo]:
+    return controller.get_members(session, team_id)
+
+
+@app.post("/teams/invite")
+async def post_team_invite(
+    session: Annotated[str, Header()],
+    team_id: Annotated[str, Body(embed=True)],
+    username: Annotated[str, Body(embed=True)],
 ) -> None:
-    user_controller.create(session, username, password)
+    controller.invite(session, team_id, username)
 
 
-@app.put("/users/locale")
-async def put_users_locale(session: str, locale: str) -> None:
-    user_controller.update_locale(session, locale)
+@app.post("/teams/invite/reply")
+async def post_teams_invite_reply(
+    session: Annotated[str, Header()],
+    team_id: Annotated[str, Body(embed=True)],
+    accepted: Annotated[bool, Body(embed=True)],
+):
+    controller.invite_reply(session, team_id, accepted)
+
+
+@app.post("/reward")
+async def post_reward(
+    session: Annotated[str, Header()],
+    team_id: Annotated[str, Body(embed=True)],
+    user_id: Annotated[str, Body(embed=True)],
+    value: Annotated[int, Body(embed=True, gt=0)],
+):
+    controller.reward(session, team_id, user_id, value)
+
+
+@app.post("/transfer")
+async def post_transfer(
+    session: Annotated[str, Header()],
+    team_id: Annotated[str, Body(embed=True)],
+    user_id: Annotated[str, Body(embed=True)],
+    value: Annotated[int, Body(embed=True, gt=0)],
+):
+    controller.transfer(session, team_id, user_id, value)
 
 
 @app.get("/users")
-async def get_users() -> list[UserView]:
-    return user_controller.get_all()
+async def get_users(
+    session: Annotated[str, Header()],
+) -> UserInfo:
+    return controller.get_user(session)
 
 
-@app.get("/users/session")
-async def get_users_session(username: str, password: str) -> str:
-    return user_controller.generate_session(username, password)
-
-
-@app.put("/users/password")
-async def put_users_password(session: str, username: str, new_password: str) -> None:
-    user_controller.update_password(session, username, new_password)
-
-
-@app.get("/users/by/session")
-async def get_users_by_session(session: str) -> UserView:
-    return UserView(**user_controller.get_by_session(session).model_dump())
-
-
-@app.get("/users/by/username")
-async def get_users_by_username(username: str) -> UserView:
-    return UserView(**user_controller.get_by_username(username).model_dump())
-
-
-@app.post("/tokens/reward")
-async def post_tokens_reward(
-    session: str, username: str, value: Annotated[int, Query(gt=0)]
-) -> None:
-    initiator = user_controller.get_by_session(session)
-    if not user_controller.username_exist(username):
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, "User with this username not found"
-        )
-    with mongoClient.start_session() as mongoSession:
-        with mongoSession.start_transaction():
-            transaction = token_controller.reward(initiator, username, value)
-            transaction_controller.add(transaction)
-
-
-@app.post("/tokens/transfer")
-async def post_tokens_transfer(
-    session: str, username: str, value: Annotated[int, Query(gt=0)]
-) -> None:
-    initiator = user_controller.get_by_session(session)
-    if not user_controller.username_exist(username):
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, "User with this username not found"
-        )
-    with mongoClient.start_session() as mongoSession:
-        with mongoSession.start_transaction():
-            transaction = token_controller.transfer(initiator, username, value)
-            transaction_controller.add(transaction)
-
-
-@app.get("/transactions")
-async def get_transactions(
-    offset: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(gt=0)] = 8,
-    initiator: Optional[str] = None,
-    reciever: Optional[str] = None,
-) -> list[Transaction]:
-    return transaction_controller.get(offset, limit, initiator, reciever)
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8000")))

@@ -1,6 +1,7 @@
 FROM python:3.11-alpine
 WORKDIR /code
-COPY ./requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
-COPY ./app /code/app
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+RUN pip install poetry
+COPY pyproject.toml poetry.lock ./
+RUN poetry install --only main --no-root
+COPY . .
+CMD ["poetry", "run", "python", "app/main.py"]

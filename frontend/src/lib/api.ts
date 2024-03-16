@@ -1,141 +1,159 @@
-import { env } from '$env/dynamic/public';
-
-const BACKEND_URL = `http${env.PUBLIC_MODE === 'production' ? 's' : ''}://${env.PUBLIC_SERVER_NAME}/api`;
-
-export interface User {
-	username: string;
-	is_admin: boolean;
-	tokens: number;
-	locale: string;
-}
-
-enum TransactionType {
-	REWARD = 'Reward',
-	TRANSFER = 'Transfer'
-}
-
-export interface Transaction {
+export interface IMember {
 	id: string;
-	timestamp: number;
-	initiator: string;
-	reciever: string;
-	value: number;
-	type: TransactionType;
+	username: string;
+	tokens: number;
+	is_admin: boolean;
 }
 
-const throwError: (response: Response) => Promise<void> = async (response: Response) => {
-	throw new Error((await response.json()).detail);
-};
+export interface ITeam {
+	id: string;
+	name: string;
+	members: Array<IMember>;
+}
 
-export const getUser: (session: string) => Promise<User> = async (session: string) => {
-	const response = await fetch(`${BACKEND_URL}/users/by/session?session=${session}`, {
-		method: 'GET'
-	});
-	if (!response.ok) await throwError(response);
+export interface IUser {
+	username: string;
+	teams: Array<ITeam>;
+	invites: Array<ITeam>;
+}
 
-	return { ...(await response.json()) };
-};
+const ENDPOINT = 'https://bbac7be85r72fufi9qb6.containers.yandexcloud.net';
 
-export const getUserByUsername: (username: string) => Promise<User> = async (username: string) => {
-	const response = await fetch(`${BACKEND_URL}/users/by/username?username=${username}`, {
-		method: 'GET'
-	});
-	if (!response.ok) await throwError(response);
-	return await response.json();
-};
-
-export const getSession: (username: string, password: string) => Promise<string> = async (
+export const get_session_token: (username: string, password: string) => Promise<string> = async (
 	username: string,
 	password: string
 ) => {
-	const response = await fetch(
-		`${BACKEND_URL}/users/session?username=${username}&password=${password}`,
-		{ method: 'GET' }
-	);
-	if (!response.ok) await throwError(response);
+	const response = await fetch(`${ENDPOINT}/users/session`, {
+		body: JSON.stringify({ username: username, password: password }),
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' }
+	});
+	if (!response.ok) {
+		throw new Error((await response.json()).detail);
+	}
 	return await response.json();
 };
 
-export const changePassword: (
-	session: string,
+export const createAccount: (username: string, password: string) => Promise<string> = async (
 	username: string,
-	new_password: string
-) => Promise<void> = async (session: string, username: string, new_password: string) => {
-	const response = await fetch(
-		`${BACKEND_URL}/users/password?session=${session}&username=${username}&new_password=${new_password}`,
-		{ method: 'PUT' }
-	);
-	if (!response.ok) await throwError(response);
-};
-
-export const getAllUsers: () => Promise<Array<User>> = async () => {
-	const response = await fetch(`${BACKEND_URL}/users`);
-	if (!response.ok) await throwError(response);
+	password: string
+) => {
+	const response = await fetch(`${ENDPOINT}/users`, {
+		body: JSON.stringify({ username: username, password: password }),
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' }
+	});
+	if (!response.ok) {
+		throw new Error((await response.json()).detail);
+	}
 	return await response.json();
 };
 
-export const transfer: (session: string, username: string, value: number) => Promise<void> = async (
+export const getUser: (session: string) => Promise<IUser> = async (session: string) => {
+	const response = await fetch(`${ENDPOINT}/users`, {
+		method: 'GET',
+		headers: { 'Content-Type': 'application/json', session: session }
+	});
+	if (!response.ok) {
+		throw new Error((await response.json()).detail);
+	}
+	const data = await response.json();
+	data.invites.forEach((team: ITeam) => (team.members = []));
+	data.teams.forEach((team: ITeam) => (team.members = []));
+	return data;
+};
+
+export const inviteReply: (
 	session: string,
-	username: string,
+	team_id: string,
+	accepted: boolean
+) => Promise<void> = async (session: string, team_id: string, accepted: boolean) => {
+	const response = await fetch(`${ENDPOINT}/teams/invite/reply`, {
+		body: JSON.stringify({ team_id: team_id, accepted: accepted }),
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', session: session }
+	});
+	if (!response.ok) {
+		throw new Error((await response.json()).detail);
+	}
+	return await response.json();
+};
+
+export const getMembers: (session: string, team_id: string) => Promise<Array<IMember>> = async (
+	session: string,
+	team_id: string
+) => {
+	const response = await fetch(`${ENDPOINT}/teams/${team_id}/members`, {
+		method: 'GET',
+		headers: { 'Content-Type': 'application/json', session: session }
+	});
+	if (!response.ok) {
+		throw new Error((await response.json()).detail);
+	}
+	return await response.json();
+};
+
+export const createTeam: (session: string, name: string) => Promise<ITeam> = async (
+	session: string,
+	name: string
+) => {
+	const response = await fetch(`${ENDPOINT}/teams`, {
+		body: JSON.stringify({ name: name }),
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', session: session }
+	});
+	if (!response.ok) {
+		throw new Error((await response.json()).detail);
+	}
+	return { id: await response.json(), name: name, members: new Array<IMember>() };
+};
+
+export const inviteMember: (
+	session: string,
+	team_id: string,
+	user_id: string
+) => Promise<void> = async (session: string, team_id: string, username: string) => {
+	const response = await fetch(`${ENDPOINT}/teams/invite`, {
+		body: JSON.stringify({ team_id: team_id, username: username }),
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', session: session }
+	});
+	if (!response.ok) {
+		throw new Error((await response.json()).detail);
+	}
+	return await response.json();
+};
+
+export const transfer: (
+	session: string,
+	team_id: string,
+	user_id: string,
 	value: number
-) => {
-	const response = await fetch(
-		`${BACKEND_URL}/tokens/transfer?session=${session}&username=${username}&value=${value}`,
-		{
-			method: 'POST'
-		}
-	);
-	if (!response.ok) await throwError(response);
-};
-
-export const getTransactions: (
-	offset: number,
-	limit: number,
-	initiator: string | null,
-	reciever: string | null
-) => Promise<Array<Transaction>> = async (
-	offset: number = 0,
-	limit: number = 8,
-	initiator: string | null = null,
-	reciever: string | null = null
-) => {
-	let query = `offset=${offset}&limit=${limit}`;
-	if (initiator !== null) {
-		query += `&initiator=${initiator}`;
+) => Promise<void> = async (session: string, team_id: string, user_id: string, value: number) => {
+	const response = await fetch(`${ENDPOINT}/transfer`, {
+		body: JSON.stringify({ team_id: team_id, user_id: user_id, value: value }),
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', session: session }
+	});
+	if (!response.ok) {
+		throw new Error((await response.json()).detail);
 	}
-	if (reciever !== null) {
-		query += `&reciever=${reciever}`;
-	}
-	const response = await fetch(`${BACKEND_URL}/transactions?${query}`);
-	if (!response.ok) await throwError(response);
 	return await response.json();
 };
 
-export const createUser: (
+export const reward: (
 	session: string,
-	username: string,
-	password: string
-) => Promise<void> = async (session: string, username: string, password: string) => {
-	const response = await fetch(
-		`${BACKEND_URL}/users/create?session=${session}&username=${username}&password=${password}`,
-		{ method: 'POST' }
-	);
-	if (!response.ok) await throwError(response);
-};
-
-export const reward = async (session: string, username: string, value: number) => {
-	const response = await fetch(
-		`${BACKEND_URL}/tokens/reward?session=${session}&username=${username}&value=${value}`,
-		{
-			method: 'POST'
-		}
-	);
-	if (!response.ok) await throwError(response);
-};
-
-export const changeLocale = async (session: string, locale: string) => {
-	const response = await fetch(`${BACKEND_URL}/users/locale?session=${session}&locale=${locale}`, {
-		method: 'PUT'
+	team_id: string,
+	user_id: string,
+	value: number
+) => Promise<void> = async (session: string, team_id: string, user_id: string, value: number) => {
+	const response = await fetch(`${ENDPOINT}/reward`, {
+		body: JSON.stringify({ team_id: team_id, user_id: user_id, value: value }),
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', session: session }
 	});
-	if (!response.ok) await throwError(response);
+	if (!response.ok) {
+		throw new Error((await response.json()).detail);
+	}
+	return await response.json();
 };

@@ -1,59 +1,39 @@
 <script lang="ts">
 	import '../app.postcss';
 
-	// Highlight JS
-	import hljs from 'highlight.js/lib/core';
-	import 'highlight.js/styles/github-dark.css';
-	import { Toast, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import xml from 'highlight.js/lib/languages/xml'; // for HTML
-	import css from 'highlight.js/lib/languages/css';
-	import javascript from 'highlight.js/lib/languages/javascript';
-	import typescript from 'highlight.js/lib/languages/typescript';
-
-	hljs.registerLanguage('xml', xml); // for HTML
-	hljs.registerLanguage('css', css);
-	hljs.registerLanguage('javascript', javascript);
-	hljs.registerLanguage('typescript', typescript);
-	storeHighlightJs.set(hljs);
-
 	// Floating UI for Popups
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
-	import { storePopup } from '@skeletonlabs/skeleton';
+	import { Modal, Toast, getToastStore, storePopup } from '@skeletonlabs/skeleton';
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 
-	import Menu from '$lib/Menu.svelte';
-	import { onMount } from 'svelte';
-	import { session, username } from '$lib/user';
-	import { goto } from '$app/navigation';
-	import { getUser } from '$lib/api';
-	import { locale } from '$lib/i18n';
 	import { initializeStores } from '@skeletonlabs/skeleton';
+	import { onMount } from 'svelte';
+	import { session, user } from '$lib/storage';
+	import { getUser } from '$lib/api';
+	import { goto } from '$app/navigation';
 	initializeStores();
 
+	const toastStore = getToastStore();
+
 	onMount(async () => {
-		$session = localStorage.getItem('session');
-		const loc = localStorage.getItem('locale');
-		if (loc !== null) $locale = loc;
-		session.subscribe(async (value) => {
-			if (value === null) {
-				localStorage.removeItem('session');
-				goto('/login');
-				return;
-			}
-			localStorage.setItem('session', value);
-			const user = await getUser(value);
-			$username = user.username;
-		});
-		locale.subscribe((value) => {
-			localStorage.setItem('locale', value);
+		session.subscribe((value) => {
+			if (value === null) return;
+			getUser(value)
+				.then((value) => {
+					$user = value;
+				})
+				.catch((error) => {
+					toastStore.trigger({ message: error, background: 'variant-filled-error' });
+					$session = null;
+					goto('/login');
+				});
 		});
 	});
 </script>
 
-<Menu />
+<Modal />
 <Toast position="t" />
-<div
-	class="flex flex-col justify-center items-center h-[100dvh] text-slate-100 font-bold transition-transform"
->
+
+<div class="flex flex-col w-full h-full justify-center items-center">
 	<slot />
 </div>
