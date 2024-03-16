@@ -1,7 +1,9 @@
 name: "Backend"
 
 on:
-  push
+  push:
+    paths:
+      - "./backend"
 
 env:
   path: ./backend
