@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getModalStore, getToastStore } from '@skeletonlabs/skeleton';
+	import { ProgressRadial, getModalStore, getToastStore } from '@skeletonlabs/skeleton';
 	// @ts-expect-error, no types for this module
 	import FaPaperPlane from 'svelte-icons/fa/FaPaperPlane.svelte';
 	// @ts-expect-error, no types for this module
@@ -19,6 +19,7 @@
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
 	let isAdmin = false;
+	let loading = true;
 
 	onMount(async () => {
 		if ($currentTeam.members.length > 0) return;
@@ -36,6 +37,7 @@
 				members.forEach((member) => {
 					if (member.username === $user.username) isAdmin = member.is_admin;
 				});
+				loading = false;
 			})
 			.catch((error) => {
 				toastStore.trigger({ message: error, background: 'variant-filled-error' });
@@ -125,6 +127,11 @@
 	</div>
 
 	<div class="flex flex-col m-1 gap-4 overflow-scroll">
+		{#if loading}
+			<div class="flex w-full justify-center">
+				<ProgressRadial width="w-12" />
+			</div>
+		{/if}
 		{#each $currentTeam.members as member, index (member.id)}
 			<div
 				class="flex justify-around card p-4"

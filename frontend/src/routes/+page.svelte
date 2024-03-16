@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Avatar, getToastStore } from '@skeletonlabs/skeleton';
+	import { Avatar, ProgressRadial, getToastStore } from '@skeletonlabs/skeleton';
 	import { getModalStore } from '@skeletonlabs/skeleton';
 
 	// @ts-expect-error, no types for this module
@@ -21,6 +21,12 @@
 
 	const modalStore = getModalStore();
 	const toastStore = getToastStore();
+	let loading = true;
+
+	user.subscribe((value) => {
+		if (value.username === '') return;
+		loading = false;
+	});
 
 	onMount(() => {
 		if ($session === null) goto('/login');
@@ -77,8 +83,14 @@
 
 <div class="flex flex-col h-3/4 w-3/4 gap-4">
 	<div class="card flex justify-around items-center py-4">
-		<Avatar initials={$user.username} />
-		<span class="text-md text-primary-500">{$user.username}</span>
+		<div class={loading ? 'animate-pulse' : ''}><Avatar initials={$user.username} /></div>
+		<span
+			class="text-md text-primary-500 {loading
+				? 'placeholder animate-pulse '
+				: ''} w-1/3 text-center"
+		>
+			{$user.username}
+		</span>
 		<button class="btn btn-icon w-8 text-error-500" on:click={handleLogOut}><IoMdExit /></button>
 	</div>
 
@@ -100,6 +112,11 @@
 				<div class="w-6 text-secondary-500"><FaArrowRight /></div>
 			</button>
 		{/each}
+		{#if loading}
+			<div class="w-full flex justify-center">
+				<ProgressRadial width="w-12" />
+			</div>
+		{/if}
 		{#each $user.invites as invite, index}
 			<div
 				class="flex justify-between items-center card p-4"
@@ -122,9 +139,19 @@
 				</div>
 			</div>
 		{/each}
-		<button class="flex justify-between font-bold btn card p-4" on:click={handleCreateNewTeam}>
-			<span>Create new team</span>
-			<div class="w-6 text-success-500"><FaPlus /></div>
-		</button>
+		{#if !loading}
+			<button
+				in:fly={{
+					duration: config.duration,
+					delay: ($user.invites.length + $user.teams.length) * config.delay,
+					y: config.offset
+				}}
+				class="flex justify-between font-bold btn card p-4"
+				on:click={handleCreateNewTeam}
+			>
+				<span>Create new team</span>
+				<div class="w-6 text-success-500"><FaPlus /></div>
+			</button>
+		{/if}
 	</div>
 </div>
