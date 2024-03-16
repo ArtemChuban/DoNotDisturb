@@ -115,3 +115,4 @@ jobs:
           revision-env: |
             DATABASE=${{ secrets.YDB_DATABASE }}
             ENDPOINT=${{ secrets.YDB_ENDPOINT }}
+            SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}

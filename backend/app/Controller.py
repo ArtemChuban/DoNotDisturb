@@ -5,15 +5,21 @@ import ydb  # type: ignore
 from fastapi import HTTPException, status
 from schemas import MemberInfo, TeamInfo, UserInfo
 from utils import hash_password, verify_password
+import jwt
 
 
 class Controller:
     __driver: ydb.Driver
     __session_pool: ydb.SessionPool
+    __jwt_key: str
 
     def start(self) -> None:
         endpoint = os.getenv("ENDPOINT")
         database = os.getenv("DATABASE")
+        jwt_key = os.getenv("SECRET_KEY")
+        if jwt_key is None:
+            raise ValueError("SECRET_KEY environment variable not set")
+        self.__jwt_key = jwt_key
         if endpoint is None:
             raise ValueError("ENDPOINT environment variable not set")
         if database is None:
@@ -30,8 +36,8 @@ class Controller:
         self.__session_pool.stop()
         self.__driver.stop()
 
-    def get_user(self, session: str) -> UserInfo:
-        user_id = self.__get_user_id_by_session(session)
+    def get_user(self, jwtoken: str) -> UserInfo:
+        user_id = self.__get_user_id_by_jwt(jwtoken)
         username = self.__get_username_by_id(user_id)
         teams = self.__get_teams_info_by_user_id(user_id)
         invites = self.__get_invites_info_by_user_id(user_id)
@@ -44,22 +50,22 @@ class Controller:
         if self.__username_exist(username):
             raise HTTPException(status.HTTP_409_CONFLICT)
         user_id = self.__create_user(username, password)
-        session = self.__create_session(user_id)
-        return session
+        jwtoken = self.__create_jwt(user_id)
+        return jwtoken
 
     def login(self, username: str, password: str) -> str:
         user_id = self.__get_user_id_by_username_and_password(username, password)
-        session = self.__create_session(user_id)
-        return session
+        jwtoken = self.__create_jwt(user_id)
+        return jwtoken
 
-    def create_team(self, session: str, name: str) -> str:
-        user_id = self.__get_user_id_by_session(session)
+    def create_team(self, jwtoken: str, name: str) -> str:
+        user_id = self.__get_user_id_by_jwt(jwtoken)
         team_id = self.__create_team(user_id, name)
         self.__add_member(user_id, team_id, is_admin=True)
         return team_id
 
-    def invite(self, session: str, team_id: str, username: str) -> None:
-        initiator_id = self.__get_user_id_by_session(session)
+    def invite(self, jwtoken: str, team_id: str, username: str) -> None:
+        initiator_id = self.__get_user_id_by_jwt(jwtoken)
         if not self.__user_is_admin(initiator_id, team_id):
             raise HTTPException(status.HTTP_403_FORBIDDEN)
         user_id = self.__get_user_id_by_username(username)
@@ -67,26 +73,26 @@ class Controller:
             raise HTTPException(status.HTTP_409_CONFLICT)
         self.__invite(user_id, team_id)
 
-    def invite_reply(self, session: str, team_id: str, accepted: bool) -> None:
-        user_id = self.__get_user_id_by_session(session)
+    def invite_reply(self, jwtoken: str, team_id: str, accepted: bool) -> None:
+        user_id = self.__get_user_id_by_jwt(jwtoken)
         if not self.__invite_exist(user_id, team_id):
             raise HTTPException(status.HTTP_404_NOT_FOUND)
         self.__remove_invite(user_id, team_id)
         if accepted:
             self.__add_member(user_id, team_id)
 
-    def reward(self, session: str, team_id: str, user_id: str, value: int) -> None:
+    def reward(self, jwtoken: str, team_id: str, user_id: str, value: int) -> None:
         if value <= 0:
             raise HTTPException(status.HTTP_400_BAD_REQUEST)
-        initiator_id = self.__get_user_id_by_session(session)
+        initiator_id = self.__get_user_id_by_jwt(jwtoken)
         if not self.__user_is_admin(initiator_id, team_id):
             raise HTTPException(status.HTTP_403_FORBIDDEN)
         self.__change_tokens(user_id, team_id, value)
 
-    def transfer(self, session: str, team_id: str, user_id: str, value: int) -> None:
+    def transfer(self, jwtoken: str, team_id: str, user_id: str, value: int) -> None:
         if value <= 0:
             raise HTTPException(status.HTTP_400_BAD_REQUEST)
-        initiator_id = self.__get_user_id_by_session(session)
+        initiator_id = self.__get_user_id_by_jwt(jwtoken)
         self.__change_tokens(initiator_id, team_id, -value)
         self.__change_tokens(user_id, team_id, value)
 
@@ -214,21 +220,14 @@ class Controller:
         )
         return count > 0
 
-    def __get_user_id_by_session(self, session: str) -> str:
-        query = f"select `user_id` from Sessions where `session` = '{session}';"
-        rows = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
-            0
-        ].rows
-        if len(rows) == 0:
+    def __get_user_id_by_jwt(self, session: str) -> str:
+        try:
+            return jwt.decode(session, self.__jwt_key, algorithms=["HS256"])["id"]
+        except jwt.PyJWTError:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED)
-        return rows[0].user_id
 
-    def __create_session(self, user_id: str) -> str:
-        user_session = str(uuid.uuid4())
-        query = f"insert into Sessions (user_id, session) \
-                  values ('{user_id}', '{user_session}');"
-        self.__session_pool.retry_operation_sync(self.__callee, query=query)
-        return user_session
+    def __create_jwt(self, user_id: str) -> str:
+        return jwt.encode({"id": user_id}, self.__jwt_key, algorithm="HS256")
 
     def __create_team(self, user_id: str, name: str) -> str:
         if self.__team_name_exist(name):
