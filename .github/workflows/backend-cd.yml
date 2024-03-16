@@ -1,86 +1,21 @@
-name: "Backend"
+name: "Backend Deploy"
 
 on:
   push:
+    branches:
+      - main
     paths:
       - backend/**
-      - .github/workflows/backend.yml
+      - .github/workflows/backend-cd.yml
 
 env:
   path: ./backend
   version: "3.11"
 
 jobs:
-  linting_black:
-    name: Linting with black
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get repository code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.version }}
-          cache: "pip"
-
-      - name: Install black
-        run: pip install black
-
-      - name: Run black
-        run: black --check ${{ env.path }}
-
-  linting_flake8:
-    name: Linting with flake8
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get repository code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.version }}
-          cache: "pip"
-
-      - name: Install flake8
-        run: pip install flake8 Flake8-pyproject
-
-      - name: Flake8 linting
-        run: |
-          cd ${{ env.path }}
-          flake8 .
-
-  typing_mypy:
-    name: Checking static types with mypy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get repository code
-        uses: actions/checkout@v4
-
-      - name: Install Poetry
-        run: pip install poetry
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.version }}
-          cache: "poetry"
-
-      - name: Install dependencies
-        run: |
-          cd ${{ env.path }}
-          poetry install
-
-      - name: Mypy checking
-        run: |
-          cd ${{ env.path }}
-          poetry run mypy .
-
   deploy:
     name: Deploy container to Yandex Cloud
     runs-on: ubuntu-latest
-    needs: [  typing_mypy, linting_black, linting_flake8 ]
     steps:
       - name: Get repository code
         uses: actions/checkout@v4
