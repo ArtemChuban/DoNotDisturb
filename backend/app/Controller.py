@@ -43,7 +43,10 @@ class Controller:
         invites = self.__get_invites_info_by_user_id(user_id)
         return UserInfo(username=username, teams=teams, invites=invites)
 
-    def get_members(self, session: str, team_id: str) -> list[MemberInfo]:
+    def get_members(self, jwtoken: str, team_id: str) -> list[MemberInfo]:
+        user_id = self.__get_user_id_by_jwt(jwtoken)
+        if not self.__is_user_in_team(user_id, team_id):
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
         return self.__get_members(team_id)
 
     def register(self, username: str, password: str) -> str:
@@ -82,16 +85,12 @@ class Controller:
             self.__add_member(user_id, team_id)
 
     def reward(self, jwtoken: str, team_id: str, user_id: str, value: int) -> None:
-        if value <= 0:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST)
         initiator_id = self.__get_user_id_by_jwt(jwtoken)
         if not self.__user_is_admin(initiator_id, team_id):
             raise HTTPException(status.HTTP_403_FORBIDDEN)
         self.__change_tokens(user_id, team_id, value)
 
     def transfer(self, jwtoken: str, team_id: str, user_id: str, value: int) -> None:
-        if value <= 0:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST)
         initiator_id = self.__get_user_id_by_jwt(jwtoken)
         self.__change_tokens(initiator_id, team_id, -value)
         self.__change_tokens(user_id, team_id, value)
@@ -107,10 +106,11 @@ class Controller:
         )
 
     def __change_tokens(self, user_id: str, team_id: str, value: int) -> None:
-        old_tokens = self.__get__tokens(user_id, team_id)
-        new_tokens = old_tokens + value
-        if new_tokens < 0:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST)
+        if value < 0:
+            old_tokens = self.__get__tokens(user_id, team_id)
+            new_tokens = old_tokens + value
+            if new_tokens < 0:
+                raise HTTPException(status.HTTP_400_BAD_REQUEST)
         query = f"update Membership \
                 set `tokens` = `tokens` + {value} \
                 where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
@@ -288,3 +288,13 @@ class Controller:
             )
             for user in users
         ]
+
+    def __is_user_in_team(self, user_id: str, team_id: str) -> bool:
+        query = f"select count(*) as count from Membership \
+                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
+        count = (
+            self.__session_pool.retry_operation_sync(self.__callee, query=query)[0]
+            .rows[0]
+            .count
+        )
+        return count > 0
