@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import { PUBLIC_API_ENDPOINT } from '$env/static/public';
 
 export interface IMember {
