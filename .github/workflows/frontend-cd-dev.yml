@@ -1,9 +1,9 @@
-name: "Frontend Deploy Production"
+name: "Frontend Deploy Dev"
 
 on:
   push:
     branches:
-      - production
+      - dev
     paths:
       - frontend/**
       - .github/workflows/frontend-cd.yml
@@ -27,6 +27,6 @@ jobs:
         with:
           access-key-id: ${{ secrets.YC_OS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.YC_OS_ACCESS_KEY_SECRET }}
-          bucket: ${{ secrets.YC_OS_BUCKET_NAME }}
+          bucket: ${{ secrets.YC_OS_BUCKET_NAME_DEV }}
           path: ./frontend/build
           clear: false

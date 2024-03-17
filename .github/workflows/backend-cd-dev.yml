@@ -1,9 +1,9 @@
-name: "Backend Deploy Production"
+name: "Backend Deploy Dev"
 
 on:
   push:
     branches:
-      - production
+      - dev
     paths:
       - backend/**
       - .github/workflows/backend-cd.yml
@@ -28,26 +28,26 @@ jobs:
       - name: Build docker image
         run: |
           cd ${{ env.path }}
-          docker build -t cr.yandex/${{ secrets.YC_CR_ID }}/${{ secrets.YC_CR_REPOSITORY }}:latest .
+          docker build -t cr.yandex/${{ secrets.YC_CR_ID_DEV }}/${{ secrets.YC_CR_REPOSITORY_DEV }}:latest .
 
       - name: Push docker image to Yandex Cloud Container Registry
         timeout-minutes: 2  # Sometime docker push can stuck
-        run: docker push cr.yandex/${{ secrets.YC_CR_ID }}/${{ secrets.YC_CR_REPOSITORY }}:latest
+        run: docker push cr.yandex/${{ secrets.YC_CR_ID_DEV }}/${{ secrets.YC_CR_REPOSITORY_DEV }}:latest
 
       - name: Deploy Serverless Container
         uses: yc-actions/yc-sls-container-deploy@v2
         with:
           yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
-          container-name: tokenapp-backend
+          container-name: tokenapp-backend-dev
           folder-id: ${{ secrets.YC_FOLDER_ID }}
           revision-service-account-id: ${{ secrets.YC_SA_ID_BACKEND }}
           revision-cores: 1
           revision-memory: 128Mb
           revision-core-fraction: 100
           revision-concurrency: 16
-          revision-image-url: cr.yandex/${{ secrets.YC_CR_ID }}/${{ secrets.YC_CR_REPOSITORY }}:latest
+          revision-image-url: cr.yandex/${{ secrets.YC_CR_ID_DEV }}/${{ secrets.YC_CR_REPOSITORY_DEV }}:latest
           revision-execution-timeout: 10
           revision-env: |
-            DATABASE=${{ secrets.YDB_DATABASE }}
-            ENDPOINT=${{ secrets.YDB_ENDPOINT }}
+            DATABASE=${{ secrets.YDB_DATABASE_DEV }}
+            ENDPOINT=${{ secrets.YDB_ENDPOINT_DEV }}
             SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
