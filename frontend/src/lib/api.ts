@@ -1,3 +1,5 @@
+import { PUBLIC_API_ENDPOINT } from '$env/static/public';
+
 export interface IMember {
 	id: string;
 	username: string;
@@ -17,7 +19,7 @@ export interface IUser {
 	invites: Array<ITeam>;
 }
 
-const ENDPOINT = 'https://bbac7be85r72fufi9qb6.containers.yandexcloud.net';
+const ENDPOINT = PUBLIC_API_ENDPOINT;
 
 export const get_session_token: (username: string, password: string) => Promise<string> = async (
 	username: string,
