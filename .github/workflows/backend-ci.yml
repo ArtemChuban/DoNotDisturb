@@ -2,6 +2,9 @@ name: "Backend Checks"
 
 on:
   push:
+    branches-ignore:
+      - dev
+      - production
     paths:
       - backend/**
 
