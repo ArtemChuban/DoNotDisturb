@@ -96,9 +96,12 @@ class Controller:
         self.__change_tokens(user_id, team_id, value)
 
     @staticmethod
-    def __callee(session: ydb.Session, query: str):
+    def __callee(
+        session: ydb.Session, query: str, parameters: dict[str, str] | None = None
+    ):
         return session.transaction().execute(
-            query,
+            session.prepare(query),
+            parameters=parameters,
             commit_tx=True,
             settings=ydb.BaseRequestSettings()
             .with_timeout(3)
@@ -111,17 +114,32 @@ class Controller:
             new_tokens = old_tokens + value
             if new_tokens < 0:
                 raise HTTPException(status.HTTP_400_BAD_REQUEST)
-        query = f"update Membership \
-                set `tokens` = `tokens` + {value} \
-                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
-        self.__session_pool.retry_operation_sync(self.__callee, query=query)
+        query = """
+                declare $userId as utf8;
+                declare $teamId as utf8;
+                declare $value as Uint64;
+                update Membership
+                set `tokens` = `tokens` + $value
+                where `user_id` = $userId and `team_id` = $teamId;
+                """
+        self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id, "$teamId": team_id, "$value": value},
+        )
 
     def __get__tokens(self, user_id: str, team_id: str) -> int:
-        query = f"select tokens from Membership \
-                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
-        rows = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
-            0
-        ].rows
+        query = """
+                declare $userId as utf8;
+                declare $teamId as utf8;
+                select tokens from Membership
+                where `user_id` = $userId and `team_id` = $teamId;
+                """
+        rows = self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id, "$teamId": team_id},
+        )[0].rows
         if len(rows) == 0:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
         return rows[0].tokens
@@ -129,49 +147,87 @@ class Controller:
     def __create_user(self, username: str, password: str) -> str:
         hashed_password = hash_password(password)
         user_id = str(uuid.uuid4())
-        query = f"insert into Users (id, username, password) \
-            values ('{user_id}', '{username}', '{hashed_password}');"
-        self.__session_pool.retry_operation_sync(self.__callee, query=query)
+        query = """
+                declare $userId as utf8;
+                declare $username as utf8;
+                declare $password as utf8;
+                insert into Users (id, username, password)
+                values ($userId, $username, $password);
+                """
+        self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={
+                "$userId": user_id,
+                "$username": username,
+                "$password": hashed_password,
+            },
+        )
         return user_id
 
     def __invite_exist(self, user_id: str, team_id: str) -> bool:
-        query = f"select count(*) as `count` from Invites \
-                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
+        query = """
+                declare $userId as utf8;
+                declare $teamId as utf8;
+                select count(*) as `count` from Invites
+                where `user_id` = $userId and `team_id` = $teamId;
+                """
         count = (
-            self.__session_pool.retry_operation_sync(self.__callee, query=query)[0]
+            self.__session_pool.retry_operation_sync(
+                self.__callee,
+                query=query,
+                parameters={"$userId": user_id, "$teamId": team_id},
+            )[0]
             .rows[0]
             .count
         )
         return count > 0
 
     def __remove_invite(self, user_id: str, team_id: str) -> None:
-        query = f"delete from Invites \
-                where `user_id` = '{user_id}' and `team_id` = '{team_id}'"
-        self.__session_pool.retry_operation_sync(self.__callee, query=query)
+        query = """
+                declare $userId as utf8;
+                declare $teamId as utf8;
+                delete from Invites
+                where `user_id` = $userId and `team_id` = $teamId;
+                """
+        self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id, "$teamId": team_id},
+        )
 
     def __get_teams_info_by_user_id(self, user_id: str) -> list[TeamInfo]:
-        query = f"select Teams.name as name, Membership.team_id as id \
-                from Membership inner join Teams on Membership.team_id = Teams.id \
-                where `user_id` = '{user_id}';"
-        teams = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
-            0
-        ].rows
+        query = """
+                declare $userId as utf8;
+                select Teams.name as name, Membership.team_id as id
+                from Membership inner join Teams on Membership.team_id = Teams.id
+                where `user_id` = $userId;
+                """
+        teams = self.__session_pool.retry_operation_sync(
+            self.__callee, query=query, parameters={"$userId": user_id}
+        )[0].rows
         return [TeamInfo(name=team.name, id=team.id) for team in teams]
 
     def __get_invites_info_by_user_id(self, user_id: str) -> list[TeamInfo]:
-        query = f"select Teams.name as name, Invites.team_id as id \
-                from Invites inner join Teams on Invites.team_id = Teams.id \
-                where `user_id` = '{user_id}';"
-        teams = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
-            0
-        ].rows
+        query = """
+                declare $userId as utf8;
+                select Teams.name as name, Invites.team_id as id
+                from Invites inner join Teams on Invites.team_id = Teams.id
+                where `user_id` = $userId;
+                """
+        teams = self.__session_pool.retry_operation_sync(
+            self.__callee, query=query, parameters={"$userId": user_id}
+        )[0].rows
         return [TeamInfo(name=team.name, id=team.id) for team in teams]
 
     def __get_username_by_id(self, user_id: str) -> str:
-        query = f"select username from Users where `id` = '{user_id}';"
-        users = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
-            0
-        ].rows
+        query = """
+                declare $userId as utf8;
+                select username from Users where `id` = $userId;
+                """
+        users = self.__session_pool.retry_operation_sync(
+            self.__callee, query=query, parameters={"$userId": user_id}
+        )[0].rows
         if len(users) == 0:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
         return users[0].username
@@ -179,10 +235,13 @@ class Controller:
     def __get_user_id_by_username_and_password(
         self, username: str, password: str
     ) -> str:
-        query = f"select id, password from Users where `username` = '{username}';"
-        users = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
-            0
-        ].rows
+        query = """
+                declare $username as utf8;
+                select id, password from Users where `username` = $username;
+                """
+        users = self.__session_pool.retry_operation_sync(
+            self.__callee, query=query, parameters={"$username": username}
+        )[0].rows
         if len(users) == 0:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
         user = users[0]
@@ -192,29 +251,40 @@ class Controller:
         return user.id
 
     def __username_exist(self, username: str) -> bool:
-        query = (
-            f"select count(*) as `count` from Users where `username` = '{username}';"
-        )
+        query = """
+                declare $username as utf8;
+                select count(*) as `count` from Users where `username` = $username;
+                """
         count = (
-            self.__session_pool.retry_operation_sync(self.__callee, query=query)[0]
+            self.__session_pool.retry_operation_sync(
+                self.__callee, query=query, parameters={"$username": username}
+            )[0]
             .rows[0]
             .count
         )
         return count > 0
 
     def __get_user_id_by_username(self, username: str) -> str:
-        query = f"select `id` from Users where `username` = '{username}';"
-        rows = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
-            0
-        ].rows
+        query = """
+                declare $username as utf8;
+                select `id` from Users where `username` = $username;
+                """
+        rows = self.__session_pool.retry_operation_sync(
+            self.__callee, query=query, parameters={"$username": username}
+        )[0].rows
         if len(rows) == 0:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
         return rows[0].id
 
     def __team_name_exist(self, name: str) -> bool:
-        query = f"select count(*) as `count` from Teams where `name` = '{name}';"
+        query = """
+                declare $name as utf8;
+                select count(*) as `count` from Teams where `name` = $name;
+                """
         count = (
-            self.__session_pool.retry_operation_sync(self.__callee, query=query)[0]
+            self.__session_pool.retry_operation_sync(
+                self.__callee, query=query, parameters={"$name": name}
+            )[0]
             .rows[0]
             .count
         )
@@ -233,52 +303,91 @@ class Controller:
         if self.__team_name_exist(name):
             raise HTTPException(status.HTTP_409_CONFLICT)
         team_id = str(uuid.uuid4())
-        query = f"insert into Teams (id, name) values ('{team_id}', '{name}');"
-        self.__session_pool.retry_operation_sync(self.__callee, query=query)
+        query = """
+                declare $teamId as utf8;
+                declare $name as utf8;
+                insert into Teams (id, name) values ($teamId, $name);
+                """
+        self.__session_pool.retry_operation_sync(
+            self.__callee, query=query, parameters={"$teamId": team_id, "$name": name}
+        )
         return team_id
 
     def __member_exist(self, user_id: str, team_id: str) -> bool:
-        query = f"select count(*) as `count` from Membership \
-                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
+        query = """
+                declare $userId as utf8;
+                declare $teamId as utf8;
+                select count(*) as `count` from Membership
+                where `user_id` = $userId and `team_id` = $teamId;
+                """
         count = (
-            self.__session_pool.retry_operation_sync(self.__callee, query=query)[0]
+            self.__session_pool.retry_operation_sync(
+                self.__callee,
+                query=query,
+                parameters={"$userId": user_id, "$teamId": team_id},
+            )[0]
             .rows[0]
             .count
         )
         return count > 0
 
     def __add_member(self, user_id: str, team_id: str, is_admin: bool = False) -> None:
-        query = f"insert into Membership (user_id, team_id, is_admin, tokens) \
-                values ('{user_id}', '{team_id}', {is_admin}, 0);"
-        self.__session_pool.retry_operation_sync(self.__callee, query=query)
+        query = """
+                declare $userId as utf8;
+                declare $teamId as utf8;
+                declare $isAdmin as bool;
+                insert into Membership (user_id, team_id, is_admin, tokens)
+                values ($userId, $teamId, $isAdmin, 0);
+                """
+        self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id, "$teamId": team_id, "$isAdmin": is_admin},
+        )
 
     def __user_is_admin(self, user_id: str, team_id: str) -> bool:
-        query = f"select `is_admin` from Membership \
-                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
-        rows = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
-            0
-        ].rows
+        query = """
+                declare $userId as utf8;
+                declare $teamId as utf8;
+                select `is_admin` from Membership
+                where `user_id` = $userId and `team_id` = $teamId;
+                """
+        rows = self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id, "$teamId": team_id},
+        )[0].rows
         if len(rows) == 0:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
         return rows[0].is_admin
 
     def __invite(self, user_id: str, team_id: str) -> None:
-        query = (
-            f"insert into Invites (user_id, team_id) values ('{user_id}', '{team_id}');"
+        query = """
+                declare $userId as utf8;
+                declare $teamId as utf8;
+                insert into Invites (user_id, team_id) values ($userId, $teamId);
+                """
+
+        self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id, "$teamId": team_id},
         )
-        self.__session_pool.retry_operation_sync(self.__callee, query=query)
 
     def __get_members(self, team_id: str) -> list[MemberInfo]:
-        query = f"select \
-                Users.id as id, \
-                Users.username as username, \
-                Membership.is_admin as is_admin, \
-                Membership.tokens as tokens \
-                from Membership inner join Users on Membership.user_id = Users.id \
-                where `team_id` = '{team_id}';"
-        users = self.__session_pool.retry_operation_sync(self.__callee, query=query)[
-            0
-        ].rows
+        query = """
+                declare $teamId as utf8;
+                select
+                Users.id as id,
+                Users.username as username,
+                Membership.is_admin as is_admin,
+                Membership.tokens as tokens
+                from Membership inner join Users on Membership.user_id = Users.id
+                where `team_id` = $teamId;
+                """
+        users = self.__session_pool.retry_operation_sync(
+            self.__callee, query=query, parameters={"$teamId": team_id}
+        )[0].rows
         return [
             MemberInfo(
                 id=user.id,
@@ -290,10 +399,18 @@ class Controller:
         ]
 
     def __is_user_in_team(self, user_id: str, team_id: str) -> bool:
-        query = f"select count(*) as count from Membership \
-                where `user_id` = '{user_id}' and `team_id` = '{team_id}';"
+        query = """
+                declare $userId as utf8;
+                declare $teamId as utf8;
+                select count(*) as count from Membership
+                where `user_id` = $userId and `team_id` = $teamId;
+                """
         count = (
-            self.__session_pool.retry_operation_sync(self.__callee, query=query)[0]
+            self.__session_pool.retry_operation_sync(
+                self.__callee,
+                query=query,
+                parameters={"$userId": user_id, "$teamId": team_id},
+            )[0]
             .rows[0]
             .count
         )
