@@ -20,6 +20,14 @@
 	const modalStore = getModalStore();
 	let isAdmin = false;
 	let loading = false;
+	let totalTokens = 0;
+
+	$: totalTokens = $currentTeam.members
+		.map((member) => member.tokens)
+		.reduce((sum, value) => sum + value, 0);
+	$: $currentTeam.members.forEach((member) => {
+		if (member.username === $user.username) isAdmin = member.is_admin;
+	});
 
 	onMount(async () => {
 		if ($currentTeam.members.length > 0) return;
@@ -35,9 +43,6 @@
 		getMembers($session, $currentTeam.id)
 			.then((members) => {
 				$currentTeam.members = members.sort((a, b) => b.tokens - a.tokens);
-				members.forEach((member) => {
-					if (member.username === $user.username) isAdmin = member.is_admin;
-				});
 				loading = false;
 			})
 			.catch((error) => {
@@ -124,7 +129,7 @@
 			><FaArrowLeft /></button
 		>
 		<span class="font-bold text-xl text-primary-500">{$currentTeam.name}</span>
-		<div></div>
+		<span class="font-bold text-xl text-primary-500">{totalTokens}</span>
 	</div>
 
 	<div class="flex flex-col m-1 gap-4 overflow-scroll">
@@ -149,7 +154,14 @@
 				>
 					{member.username}
 				</span>
-				<span class="font-bold text-xl w-1/3 text-center overflow-hidden">{member.tokens}</span>
+				<div class="w-1/3 overflow-hidden text-nowrap text-center">
+					<span class="font-bold text-xl">
+						{member.tokens}
+					</span>
+					<span class="text-xs text-">
+						{Math.floor((member.tokens / totalTokens) * 100_0) / 10}%
+					</span>
+				</div>
 				<div class="flex justify-end gap-4 w-1/3">
 					{#if member.username !== $user.username}
 						<button

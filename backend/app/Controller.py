@@ -117,9 +117,9 @@ class Controller:
         query = """
                 declare $userId as utf8;
                 declare $teamId as utf8;
-                declare $value as Uint64;
+                declare $value as Int64;
                 update Membership
-                set `tokens` = `tokens` + $value
+                set `tokens` = cast(cast(`tokens` as Int64) + $value as Uint64)
                 where `user_id` = $userId and `team_id` = $teamId;
                 """
         self.__session_pool.retry_operation_sync(
