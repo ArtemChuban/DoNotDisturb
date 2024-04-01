@@ -33,15 +33,11 @@
 
 	onMount(() => {
 		user.subscribe((value) => {
-			if ($session === null) {
-				push('/login');
-				return;
-			}
 			if (value.username === '') return;
 			currentTeam = value.teams[params.id];
 			if (currentTeam.members.length > 0) return;
 			loading = true;
-			getMembers($session, currentTeam.id)
+			getMembers($session!, currentTeam.id)
 				.then((members) => {
 					if (currentTeam === undefined) return;
 					currentTeam.members = members.sort((a, b) => b.tokens - a.tokens);
@@ -61,7 +57,7 @@
 			body: `Enter tokens value to transfer to ${member.username}`,
 			valueAttr: { type: 'number', required: true, min: 1 },
 			response: (value: number) => {
-				if (!value || $session === null) return;
+				if (!value) return;
 				const user_as_member = currentTeam.members.find(
 					(member) => member.username === $user.username
 				);
@@ -73,7 +69,7 @@
 					});
 					return;
 				}
-				transfer($session, currentTeam.id, member.id, value)
+				transfer($session!, currentTeam.id, member.id, value)
 					.then(() => {
 						member.tokens += value;
 						user_as_member.tokens -= value;
@@ -94,8 +90,8 @@
 			body: `Enter tokens value to reward ${member.username}`,
 			valueAttr: { type: 'number', required: true, min: 1 },
 			response: (value: number) => {
-				if (!value || $session === null) return;
-				reward($session, currentTeam.id, member.id, value)
+				if (!value) return;
+				reward($session!, currentTeam.id, member.id, value)
 					.then(() => {
 						member.tokens += value;
 						currentTeam.members = currentTeam.members.sort((a, b) => b.tokens - a.tokens);
@@ -115,8 +111,8 @@
 			body: `Enter username`,
 			valueAttr: { type: 'text', required: true },
 			response: (value: string) => {
-				if (!value || $session === null) return;
-				inviteMember($session, currentTeam.id, value)
+				if (!value) return;
+				inviteMember($session!, currentTeam.id, value)
 					.then(() => {})
 					.catch((error) => {
 						toastStore.trigger({ message: error, background: 'variant-filled-error' });

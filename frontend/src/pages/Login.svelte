@@ -2,7 +2,6 @@
 	import { get_session_token } from '$lib/api';
 	import { session } from '$lib/storage';
 	import { ProgressRadial, getToastStore } from '@skeletonlabs/skeleton';
-	import { onMount } from 'svelte';
 	import { push } from 'svelte-spa-router';
 
 	const toastStore = getToastStore();
@@ -10,10 +9,6 @@
 	let username = '';
 	let password = '';
 	let loading = false;
-
-	onMount(() => {
-		if ($session !== null) push('/');
-	});
 
 	const handleLogin = () => {
 		if (username.length < 1 || password.length < 1) {

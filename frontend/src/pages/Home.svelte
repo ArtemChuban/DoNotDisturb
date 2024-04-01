@@ -13,7 +13,6 @@
 	// @ts-expect-error, no types for this module
 	import FaCheck from 'svelte-icons/fa/FaCheck.svelte';
 	import { session, user } from '$lib/storage';
-	import { onMount } from 'svelte';
 	import { createTeam, inviteReply, type ITeam } from '$lib/api';
 	import { fly } from 'svelte/transition';
 	import { config } from '$lib/config';
@@ -26,10 +25,6 @@
 	user.subscribe((value) => {
 		if (value.username === '') return;
 		loading = false;
-	});
-
-	onMount(() => {
-		if ($session === null) push('/login');
 	});
 
 	const handleLogOut = () => {
@@ -46,8 +41,7 @@
 	};
 
 	const handleInviteReply = async (team: ITeam, accepted: boolean) => {
-		if ($session === null) return;
-		inviteReply($session, team.id, accepted)
+		inviteReply($session!, team.id, accepted)
 			.then(() => {
 				$user.invites.splice($user.invites.indexOf(team), 1);
 				if (accepted) {
@@ -67,8 +61,8 @@
 			body: 'New team name',
 			valueAttr: { type: 'text', required: true },
 			response: (team_name: string) => {
-				if (!team_name || $session === null) return;
-				createTeam($session, team_name)
+				if (!team_name) return;
+				createTeam($session!, team_name)
 					.then((team) => {
 						$user.teams[team.id] = team;
 						$user = $user;
