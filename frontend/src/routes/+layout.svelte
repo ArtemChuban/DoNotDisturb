@@ -14,9 +14,6 @@
 	initializeStores();
 
 	const toastStore = getToastStore();
-	$: console.log('location:', $location);
-	$: console.log('session:', $session);
-	$: console.log('user:', $user);
 
 	onMount(async () => {
 		session.subscribe((value) => {

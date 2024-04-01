@@ -1,15 +1,38 @@
 <script lang="ts">
-	import Router from 'svelte-spa-router';
+	import Router, { push, type ConditionsFailedEvent } from 'svelte-spa-router';
 	import Home from '../pages/Home.svelte';
 	import Login from '../pages/Login.svelte';
 	import Register from '../pages/Register.svelte';
 	import Team from '../pages/Team.svelte';
+	import wrap from 'svelte-spa-router/wrap';
+	import { session } from '$lib/storage';
+
+	const conditionFailedHandler = (_event: ConditionsFailedEvent) => {
+		if ($session === null) {
+			push('/login');
+		} else {
+			push('/');
+		}
+	};
+
 	const routes = {
-		'/': Home,
-		'/login': Login,
-		'/register': Register,
-		'/team/:id': Team
+		'/login': wrap({
+			component: Login,
+			conditions: [() => $session === null]
+		}),
+		'/register': wrap({
+			component: Register,
+			conditions: [() => $session === null]
+		}),
+		'/': wrap({
+			component: Home,
+			conditions: [() => $session !== null]
+		}),
+		'/team/:id': wrap({
+			component: Team,
+			conditions: [() => $session !== null]
+		})
 	};
 </script>
 
-<Router {routes} />
+<Router {routes} on:conditionsFailed={conditionFailedHandler} />
