@@ -121,6 +121,13 @@
 			}
 		});
 	};
+
+	const getPercentage = (value: number, total: number): number => {
+		if (total === 0) {
+			return 0;
+		}
+		return Math.floor((value / total) * 100_0) / 10;
+	};
 </script>
 
 <div class="flex flex-col h-3/4 w-3/4 gap-4">
@@ -159,7 +166,7 @@
 						{member.tokens}
 					</span>
 					<span class="text-xs text-">
-						{Math.floor((member.tokens / totalTokens) * 100_0) / 10}%
+						{getPercentage(member.tokens, totalTokens)}%
 					</span>
 				</div>
 				<div class="flex justify-end gap-4 w-1/3">
