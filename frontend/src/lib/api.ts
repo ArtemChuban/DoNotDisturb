@@ -17,7 +17,7 @@ export interface ITeam {
 
 export interface IUser {
 	username: string;
-	teams: Array<ITeam>;
+	teams: Record<string, ITeam>;
 	invites: Array<ITeam>;
 }
 
@@ -53,7 +53,9 @@ export const createAccount: (username: string, password: string) => Promise<stri
 	return await response.json();
 };
 
-export const getUser: (session: string) => Promise<IUser> = async (session: string) => {
+export const getUser: (session: string) => Promise<IUser> = async (
+	session: string
+): Promise<IUser> => {
 	const response = await fetch(`${ENDPOINT}/users`, {
 		method: 'GET',
 		headers: { 'Content-Type': 'application/json', session: session }
@@ -61,10 +63,19 @@ export const getUser: (session: string) => Promise<IUser> = async (session: stri
 	if (!response.ok) {
 		throw new Error((await response.json()).detail);
 	}
-	const data = await response.json();
-	data.invites.forEach((team: ITeam) => (team.members = []));
-	data.teams.forEach((team: ITeam) => (team.members = []));
-	return data;
+	const data: {
+		username: string;
+		teams: Array<{ name: string; id: string }>;
+		invites: Array<{ name: string; id: string }>;
+	} = await response.json();
+	const user: IUser = { username: data.username, teams: {}, invites: [] };
+	data.teams.forEach((team) => {
+		user.teams[team.id] = { name: team.name, id: team.id, members: [] };
+	});
+	data.invites.forEach((team) => {
+		user.invites.push({ name: team.name, id: team.id, members: [] });
+	});
+	return user;
 };
 
 export const inviteReply: (

@@ -42,6 +42,7 @@
 	"type": "module",
 	"dependencies": {
 		"@floating-ui/dom": "1.6.3",
-		"svelte-icons": "^2.1.0"
+		"svelte-icons": "^2.1.0",
+		"svelte-spa-router": "^4.0.1"
 	}
 }

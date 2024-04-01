@@ -9,46 +9,49 @@
 	// @ts-expect-error, no types for this module
 	import FaPlus from 'svelte-icons/fa/FaPlus.svelte';
 
-	import { goto } from '$app/navigation';
-	import { currentTeam, session, user } from '$lib/storage';
-	import { getMembers, inviteMember, type IMember, transfer, reward } from '$lib/api';
+	import { session, user } from '$lib/storage';
+	import { getMembers, inviteMember, type IMember, transfer, reward, type ITeam } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { config } from '$lib/config';
 	import { fly } from 'svelte/transition';
+	import { push } from 'svelte-spa-router';
 
+	export let params: { id: string };
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
 	let isAdmin = false;
 	let loading = false;
 	let totalTokens = 0;
+	let currentTeam: ITeam = { id: '', members: [], name: '' };
 
-	$: totalTokens = $currentTeam.members
+	$: totalTokens = currentTeam.members
 		.map((member) => member.tokens)
 		.reduce((sum, value) => sum + value, 0);
-	$: $currentTeam.members.forEach((member) => {
+	$: currentTeam.members.forEach((member) => {
 		if (member.username === $user.username) isAdmin = member.is_admin;
 	});
 
-	onMount(async () => {
-		if ($currentTeam.members.length > 0) return;
-		if ($session === null) {
-			goto('/login');
-			return;
-		}
-		if ($currentTeam.name === '') {
-			goto('/');
-			return;
-		}
-		loading = true;
-		getMembers($session, $currentTeam.id)
-			.then((members) => {
-				$currentTeam.members = members.sort((a, b) => b.tokens - a.tokens);
-				loading = false;
-			})
-			.catch((error) => {
-				toastStore.trigger({ message: error, background: 'variant-filled-error' });
-				goto('/');
-			});
+	onMount(() => {
+		user.subscribe((value) => {
+			if ($session === null) {
+				push('/login');
+				return;
+			}
+			if (value.username === '') return;
+			currentTeam = value.teams[params.id];
+			if (currentTeam.members.length > 0) return;
+			loading = true;
+			getMembers($session, currentTeam.id)
+				.then((members) => {
+					if (currentTeam === undefined) return;
+					currentTeam.members = members.sort((a, b) => b.tokens - a.tokens);
+					loading = false;
+				})
+				.catch((error) => {
+					toastStore.trigger({ message: error, background: 'variant-filled-error' });
+					push('/');
+				});
+		});
 	});
 
 	const handleTransfer = async (member: IMember) => {
@@ -59,7 +62,7 @@
 			valueAttr: { type: 'number', required: true, min: 1 },
 			response: (value: number) => {
 				if (!value || $session === null) return;
-				const user_as_member = $currentTeam.members.find(
+				const user_as_member = currentTeam.members.find(
 					(member) => member.username === $user.username
 				);
 				if (user_as_member === undefined) return;
@@ -70,12 +73,12 @@
 					});
 					return;
 				}
-				transfer($session, $currentTeam.id, member.id, value)
+				transfer($session, currentTeam.id, member.id, value)
 					.then(() => {
 						member.tokens += value;
 						user_as_member.tokens -= value;
-						$currentTeam.members = $currentTeam.members.sort((a, b) => b.tokens - a.tokens);
-						$currentTeam = $currentTeam;
+						currentTeam.members = currentTeam.members.sort((a, b) => b.tokens - a.tokens);
+						currentTeam = currentTeam;
 					})
 					.catch((error) => {
 						toastStore.trigger({ message: error, background: 'variant-filled-error' });
@@ -92,11 +95,11 @@
 			valueAttr: { type: 'number', required: true, min: 1 },
 			response: (value: number) => {
 				if (!value || $session === null) return;
-				reward($session, $currentTeam.id, member.id, value)
+				reward($session, currentTeam.id, member.id, value)
 					.then(() => {
 						member.tokens += value;
-						$currentTeam.members = $currentTeam.members.sort((a, b) => b.tokens - a.tokens);
-						$currentTeam = $currentTeam;
+						currentTeam.members = currentTeam.members.sort((a, b) => b.tokens - a.tokens);
+						currentTeam = currentTeam;
 					})
 					.catch((error) => {
 						toastStore.trigger({ message: error, background: 'variant-filled-error' });
@@ -113,7 +116,7 @@
 			valueAttr: { type: 'text', required: true },
 			response: (value: string) => {
 				if (!value || $session === null) return;
-				inviteMember($session, $currentTeam.id, value)
+				inviteMember($session, currentTeam.id, value)
 					.then(() => {})
 					.catch((error) => {
 						toastStore.trigger({ message: error, background: 'variant-filled-error' });
@@ -132,10 +135,10 @@
 
 <div class="flex flex-col h-3/4 w-3/4 gap-4">
 	<div class="card flex justify-around items-center py-4">
-		<button type="button" class="btn btn-icon w-6" on:click={() => goto('/')}
+		<button type="button" class="btn btn-icon w-6" on:click={() => push('/')}
 			><FaArrowLeft /></button
 		>
-		<span class="font-bold text-xl text-primary-500">{$currentTeam.name}</span>
+		<span class="font-bold text-xl text-primary-500">{currentTeam.name}</span>
 		<span class="font-bold text-xl text-primary-500">{totalTokens}</span>
 	</div>
 
@@ -145,7 +148,7 @@
 				<ProgressRadial width="w-12" />
 			</div>
 		{/if}
-		{#each $currentTeam.members as member, index (member.id)}
+		{#each currentTeam.members as member, index (member.id)}
 			<div
 				class="flex justify-around card p-4"
 				in:fly={{
