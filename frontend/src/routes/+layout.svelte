@@ -10,7 +10,7 @@
 	import { onMount } from 'svelte';
 	import { session, user } from '$lib/storage';
 	import { getUser } from '$lib/api';
-	import { location, push } from 'svelte-spa-router';
+	import { push } from 'svelte-spa-router';
 	initializeStores();
 
 	const toastStore = getToastStore();

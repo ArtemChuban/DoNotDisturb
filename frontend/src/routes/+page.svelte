@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Router, { push, type ConditionsFailedEvent } from 'svelte-spa-router';
+	import Router, { push } from 'svelte-spa-router';
 	import Home from '../pages/Home.svelte';
 	import Login from '../pages/Login.svelte';
 	import Register from '../pages/Register.svelte';
@@ -7,7 +7,7 @@
 	import wrap from 'svelte-spa-router/wrap';
 	import { session } from '$lib/storage';
 
-	const conditionFailedHandler = (_event: ConditionsFailedEvent) => {
+	const conditionFailedHandler = () => {
 		if ($session === null) {
 			push('/login');
 		} else {
