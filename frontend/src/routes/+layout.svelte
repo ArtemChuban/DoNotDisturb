@@ -10,7 +10,7 @@
 	import { onMount } from 'svelte';
 	import { session, user } from '$lib/storage';
 	import { getUser } from '$lib/api';
-	import { goto } from '$app/navigation';
+	import { push } from 'svelte-spa-router';
 	initializeStores();
 
 	const toastStore = getToastStore();
@@ -25,7 +25,7 @@
 				.catch((error) => {
 					toastStore.trigger({ message: error, background: 'variant-filled-error' });
 					$session = null;
-					goto('/login');
+					push('/login');
 				});
 		});
 	});
