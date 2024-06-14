@@ -8,6 +8,7 @@ class TeamInfo(BaseModel):
 
 class UserInfo(BaseModel):
     username: str
+    balance: int
     teams: list[TeamInfo]
     invites: list[TeamInfo]
 
