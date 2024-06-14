@@ -41,7 +41,13 @@ class Controller:
         username = self.__get_username_by_id(user_id)
         teams = self.__get_teams_info_by_user_id(user_id)
         invites = self.__get_invites_info_by_user_id(user_id)
-        return UserInfo(username=username, teams=teams, invites=invites)
+        balance = self.__get__balance(user_id)
+        return UserInfo(
+            username=username,
+            teams=teams,
+            invites=invites,
+            balance=balance,
+        )
 
     def get_members(self, jwtoken: str, team_id: str) -> list[MemberInfo]:
         user_id = self.__get_user_id_by_jwt(jwtoken)
@@ -63,6 +69,8 @@ class Controller:
 
     def create_team(self, jwtoken: str, name: str) -> str:
         user_id = self.__get_user_id_by_jwt(jwtoken)
+        team_creation_price = 1  # TODO: env var
+        self.__change_balance(user_id, -team_creation_price)
         team_id = self.__create_team(user_id, name)
         self.__add_member(user_id, team_id, is_admin=True)
         return team_id
@@ -128,6 +136,26 @@ class Controller:
             parameters={"$userId": user_id, "$teamId": team_id, "$value": value},
         )
 
+    def __change_balance(self, user_id: str, value: int) -> None:
+        if value >= 0:
+            raise NotImplementedError
+        old_balance = self.__get__balance(user_id)
+        new_balance = old_balance + value
+        if new_balance < 0:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST)
+        query = """
+                declare $userId as utf8;
+                declare $value as Int64;
+                update Users
+                set `balance` = cast(cast(`balance` as Int64) + $value as Uint64)
+                where `id` = $userId;
+                """
+        self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id, "$value": value},
+        )
+
     def __get__tokens(self, user_id: str, team_id: str) -> int:
         query = """
                 declare $userId as utf8;
@@ -144,6 +172,21 @@ class Controller:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
         return rows[0].tokens
 
+    def __get__balance(self, user_id: str) -> int:
+        query = """
+                declare $userId as utf8;
+                select balance from Users
+                where `id` = $userId;
+                """
+        rows = self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id},
+        )[0].rows
+        if len(rows) == 0:
+            raise HTTPException(status.HTTP_404_NOT_FOUND)
+        return rows[0].balance
+
     def __create_user(self, username: str, password: str) -> str:
         hashed_password = hash_password(password)
         user_id = str(uuid.uuid4())
@@ -151,8 +194,8 @@ class Controller:
                 declare $userId as utf8;
                 declare $username as utf8;
                 declare $password as utf8;
-                insert into Users (id, username, password)
-                values ($userId, $username, $password);
+                insert into Users (id, username, password, balance)
+                values ($userId, $username, $password, 0);
                 """
         self.__session_pool.retry_operation_sync(
             self.__callee,
