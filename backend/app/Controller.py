@@ -1,11 +1,11 @@
 import os
 import uuid
 
+import jwt
 import ydb  # type: ignore
 from fastapi import HTTPException, status
 from schemas import MemberInfo, TeamInfo, UserInfo
 from utils import hash_password, verify_password
-import jwt
 
 
 class Controller:
@@ -103,6 +103,10 @@ class Controller:
         self.__change_tokens(initiator_id, team_id, -value)
         self.__change_tokens(user_id, team_id, value)
 
+    def update_user(self, jwtoken: str, new_password: str) -> None:
+        user_id = self.__get_user_id_by_jwt(jwtoken)
+        self.__change_password(user_id, new_password)
+
     @staticmethod
     def __callee(
         session: ydb.Session, query: str, parameters: dict[str, str] | None = None
@@ -154,6 +158,21 @@ class Controller:
             self.__callee,
             query=query,
             parameters={"$userId": user_id, "$value": value},
+        )
+
+    def __change_password(self, user_id: str, new_password: str) -> None:
+        hashed_password = hash_password(new_password)
+        query = """
+                declare $userId as utf8;
+                declare $password as utf8;
+                update Users
+                set `password` = $password
+                where `id` = $userId;
+                """
+        self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id, "$password": hashed_password},
         )
 
     def __get__tokens(self, user_id: str, team_id: str) -> int:

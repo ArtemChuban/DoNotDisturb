@@ -35,6 +35,14 @@ async def post_users(
     return controller.register(username, password)
 
 
+@app.patch("/users")
+async def patch_users(
+    session: Annotated[str, Header()],
+    password: Annotated[str, Body(embed=True)],
+) -> None:
+    controller.update_user(session, password)
+
+
 @app.post("/users/session")
 async def post_users_session(
     username: Annotated[str, Body(embed=True)],

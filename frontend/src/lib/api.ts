@@ -122,6 +122,19 @@ export const createTeam: (session: string, name: string) => Promise<ITeam> = asy
 	}
 	return { id: await response.json(), name: name, members: new Array<IMember>() };
 };
+export const updateAccount: (session: string, password: string) => Promise<void> = async (
+	session: string,
+	password: string
+) => {
+	const response = await fetch(`${ENDPOINT}/users`, {
+		body: JSON.stringify({ password: password }),
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json', session: session }
+	});
+	if (!response.ok) {
+		throw new Error((await response.json()).detail);
+	}
+};
 
 export const inviteMember: (
 	session: string,
