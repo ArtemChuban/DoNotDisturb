@@ -21,6 +21,15 @@ export interface IUser {
 	invites: Array<ITeam>;
 }
 
+export interface ITransaction {
+	from_username: string;
+	to_username: string;
+	type: number;
+	timestamp: number;
+	value: number;
+	id: string;
+}
+
 const ENDPOINT = PUBLIC_API_ENDPOINT;
 
 export const get_session_token: (username: string, password: string) => Promise<string> = async (
@@ -102,6 +111,30 @@ export const getMembers: (session: string, team_id: string) => Promise<Array<IMe
 		method: 'GET',
 		headers: { 'Content-Type': 'application/json', session: session }
 	});
+	if (!response.ok) {
+		throw new Error((await response.json()).detail);
+	}
+	return await response.json();
+};
+
+export const getTransactions: (
+	session: string,
+	team_id: string,
+	offset: number,
+	limit: number
+) => Promise<Array<ITransaction>> = async (
+	session: string,
+	team_id: string,
+	offset: number,
+	limit: number
+) => {
+	const response = await fetch(
+		`${ENDPOINT}/teams/${team_id}/transactions?offset=${offset}&limit=${limit}`,
+		{
+			method: 'GET',
+			headers: { 'Content-Type': 'application/json', session: session }
+		}
+	);
 	if (!response.ok) {
 		throw new Error((await response.json()).detail);
 	}

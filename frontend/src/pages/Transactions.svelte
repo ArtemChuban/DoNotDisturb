@@ -1,18 +1,16 @@
 <script lang="ts">
-	import { ProgressRadial, getModalStore, getToastStore } from '@skeletonlabs/skeleton';
-	// @ts-expect-error, no types for this module
-	import FaPaperPlane from 'svelte-icons/fa/FaPaperPlane.svelte';
+	import { ProgressRadial, getToastStore } from '@skeletonlabs/skeleton';
 	// @ts-expect-error, no types for this module
 	import FaArrowLeft from 'svelte-icons/fa/FaArrowLeft.svelte';
+	// @ts-expect-error, no types for this module
+	import FaPaperPlane from 'svelte-icons/fa/FaPaperPlane.svelte';
 	// @ts-expect-error, no types for this module
 	import FaAward from 'svelte-icons/fa/FaAward.svelte';
 	// @ts-expect-error, no types for this module
 	import FaPlus from 'svelte-icons/fa/FaPlus.svelte';
-	// @ts-expect-error, no types for this module
-	import FaHistory from 'svelte-icons/fa/FaHistory.svelte';
 
 	import { session, user } from '$lib/storage';
-	import { getMembers, inviteMember, type IMember, transfer, reward, type ITeam } from '$lib/api';
+	import { type ITransaction, getTransactions } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { config } from '$lib/config';
 	import { fly } from 'svelte/transition';
@@ -20,182 +18,97 @@
 
 	export let params: { id: string };
 	const toastStore = getToastStore();
-	const modalStore = getModalStore();
-	let isAdmin = false;
 	let loading = false;
-	let totalTokens = 0;
-	let currentTeam: ITeam = { id: '', members: [], name: '' };
-
-	$: totalTokens = currentTeam.members
-		.map((member) => member.tokens)
-		.reduce((sum, value) => sum + value, 0);
-	$: currentTeam.members.forEach((member) => {
-		if (member.username === $user.username) isAdmin = member.is_admin;
-	});
+	let transactions: ITransaction[] = [];
+	let teamName = '';
+	let fullLoaded = false;
+	const TransactionsPerLoad = 8;
 
 	onMount(() => {
 		user.subscribe((value) => {
-			if (value.username === '') return;
-			currentTeam = value.teams[params.id];
-			if (currentTeam.members.length > 0) return;
 			loading = true;
-			getMembers($session!, currentTeam.id)
-				.then((members) => {
-					if (currentTeam === undefined) return;
-					currentTeam.members = members.sort((a, b) => b.tokens - a.tokens);
-					loading = false;
-				})
-				.catch((error) => {
-					toastStore.trigger({ message: error, background: 'variant-filled-error' });
-					push('/');
-				});
+			if (!Object.keys(value.teams).includes(params.id)) return;
+			teamName = $user.teams[params.id].name;
+			loadMoreTransactions();
 		});
 	});
-
-	const handleTransfer = async (member: IMember) => {
-		modalStore.trigger({
-			type: 'prompt',
-			title: 'Transfer',
-			body: `Enter tokens value to transfer to ${member.username}`,
-			valueAttr: { type: 'number', required: true, min: 1 },
-			response: (value: number) => {
-				if (!value) return;
-				const user_as_member = currentTeam.members.find(
-					(member) => member.username === $user.username
-				);
-				if (user_as_member === undefined) return;
-				if (user_as_member.tokens < value) {
-					toastStore.trigger({
-						message: "You don't have enough tokens",
-						background: 'variant-filled-error'
-					});
-					return;
-				}
-				transfer($session!, currentTeam.id, member.id, value)
-					.then(() => {
-						member.tokens += value;
-						user_as_member.tokens -= value;
-						currentTeam.members = currentTeam.members.sort((a, b) => b.tokens - a.tokens);
-						currentTeam = currentTeam;
-					})
-					.catch((error) => {
-						toastStore.trigger({ message: error, background: 'variant-filled-error' });
-					});
-			}
-		});
-	};
-
-	const handleReward = async (member: IMember) => {
-		modalStore.trigger({
-			type: 'prompt',
-			title: 'Reward',
-			body: `Enter tokens value to reward ${member.username}`,
-			valueAttr: { type: 'number', required: true, min: 1 },
-			response: (value: number) => {
-				if (!value) return;
-				reward($session!, currentTeam.id, member.id, value)
-					.then(() => {
-						member.tokens += value;
-						currentTeam.members = currentTeam.members.sort((a, b) => b.tokens - a.tokens);
-						currentTeam = currentTeam;
-					})
-					.catch((error) => {
-						toastStore.trigger({ message: error, background: 'variant-filled-error' });
-					});
-			}
-		});
-	};
-
-	const handleInvite = async () => {
-		modalStore.trigger({
-			type: 'prompt',
-			title: 'Invite',
-			body: `Enter username`,
-			valueAttr: { type: 'text', required: true },
-			response: (value: string) => {
-				if (!value) return;
-				inviteMember($session!, currentTeam.id, value)
-					.then(() => {})
-					.catch((error) => {
-						toastStore.trigger({ message: error, background: 'variant-filled-error' });
-					});
-			}
-		});
-	};
-
-	const getPercentage = (value: number, total: number): number => {
-		if (total === 0) {
-			return 0;
-		}
-		return Math.floor((value / total) * 100_0) / 10;
+	const loadMoreTransactions = () => {
+		loading = true;
+		getTransactions($session!, params.id, transactions.length, TransactionsPerLoad)
+			.then((txs) => {
+				if (txs.length < TransactionsPerLoad) fullLoaded = true;
+				transactions = [...transactions, ...txs];
+				loading = false;
+			})
+			.catch((error) => {
+				toastStore.trigger({ message: error, background: 'variant-filled-error' });
+				push('/');
+			});
 	};
 </script>
 
 <div class="flex flex-col h-3/4 w-3/4 gap-4">
 	<div class="card flex justify-around items-center py-4">
-		<button type="button" class="btn btn-icon w-6" on:click={() => push('/')}
+		<button type="button" class="btn btn-icon w-6" on:click={() => push(`/team/${params.id}`)}
 			><FaArrowLeft /></button
 		>
-		<span class="font-bold text-xl text-primary-500">{currentTeam.name}</span>
-		<span class="font-bold text-xl text-primary-500">{totalTokens}</span>
-		<button
-			class="w-6 text-secondary-500"
-			on:click={() => push(`/team/${currentTeam.id}/transactions`)}><FaHistory /></button
-		>
+		<span class="font-bold text-xl text-primary-500">{teamName}</span>
+		<span class="font-bold text-xl">TXs</span>
 	</div>
 
 	<div class="flex flex-col m-1 gap-4 overflow-scroll">
-		{#if loading}
-			<div class="flex w-full justify-center">
-				<ProgressRadial width="w-12" />
-			</div>
-		{/if}
-		{#each currentTeam.members as member, index (member.id)}
+		{#each transactions as tx, index (tx.id)}
 			<div
-				class="flex justify-around card p-4"
+				class="card p-4 relative overflow-visible"
 				in:fly={{
 					duration: config.duration,
 					delay: index * config.delay,
 					y: config.offset
 				}}
 			>
-				<span
-					class="font-bold text-xl w-1/3 overflow-hidden {member.username === $user.username
-						? 'text-primary-500'
-						: ''}"
-				>
-					{member.username}
-				</span>
-				<div class="w-1/3 overflow-hidden text-nowrap text-center">
-					<span class="font-bold text-xl">
-						{member.tokens}
+				<div class="flex justify-around mb-2">
+					<span
+						class="font-bold text-xl w-1/3 overflow-hidden {tx.from_username === $user.username
+							? 'text-primary-500'
+							: ''}"
+					>
+						{tx.from_username}
 					</span>
-					<span class="text-xs text-">
-						{getPercentage(member.tokens, totalTokens)}%
-					</span>
-				</div>
-				<div class="flex justify-end gap-4 w-1/3">
-					{#if member.username !== $user.username}
-						<button
-							class="btn btn-icon w-6 text-secondary-500"
-							on:click={() => handleTransfer(member)}
-						>
-							<FaPaperPlane />
-						</button>
-					{/if}
-					{#if isAdmin}
-						<button class="btn btn-icon w-6 text-success-500" on:click={() => handleReward(member)}>
+					<div class="w-6 text-secondary-500">
+						{#if tx.type === 0}
 							<FaAward />
-						</button>
-					{/if}
+						{:else if tx.type === 1}
+							<FaPaperPlane />
+						{/if}
+					</div>
+					<div class="w-1/5 overflow-hidden text-nowrap text-center">
+						<span class="font-bold text-xl">
+							{tx.value}
+						</span>
+					</div>
+					<span
+						class="font-bold text-xl w-1/3 overflow-hidden {tx.to_username === $user.username
+							? 'text-primary-500'
+							: ''}"
+					>
+						{tx.to_username}
+					</span>
 				</div>
+				<span>
+					{new Date(Math.floor(tx.timestamp / 1000)).toLocaleString('en-EN')}
+				</span>
 			</div>
 		{/each}
-		{#if isAdmin}
-			<button class="flex justify-between font-bold btn card p-4" on:click={handleInvite}>
-				<span>Invite team member</span>
+		{#if !fullLoaded}
+			<button class="flex justify-between font-bold btn card p-4" on:click={loadMoreTransactions}>
+				<span>Load more</span>
 				<div class="w-6 text-success-500"><FaPlus /></div>
 			</button>
 		{/if}
 	</div>
+	{#if loading}
+		<div class="flex w-full justify-center">
+			<ProgressRadial width="w-12" />
+		</div>
+	{/if}
 </div>

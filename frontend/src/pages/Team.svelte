@@ -8,6 +8,8 @@
 	import FaAward from 'svelte-icons/fa/FaAward.svelte';
 	// @ts-expect-error, no types for this module
 	import FaPlus from 'svelte-icons/fa/FaPlus.svelte';
+	// @ts-expect-error, no types for this module
+	import FaHistory from 'svelte-icons/fa/FaHistory.svelte';
 
 	import { session, user } from '$lib/storage';
 	import { getMembers, inviteMember, type IMember, transfer, reward, type ITeam } from '$lib/api';
@@ -136,6 +138,10 @@
 		>
 		<span class="font-bold text-xl text-primary-500">{currentTeam.name}</span>
 		<span class="font-bold text-xl text-primary-500">{totalTokens}</span>
+		<button
+			class="w-6 text-secondary-500"
+			on:click={() => push(`/team/${currentTeam.id}/transactions`)}><FaHistory /></button
+		>
 	</div>
 
 	<div class="flex flex-col m-1 gap-4 overflow-scroll">
