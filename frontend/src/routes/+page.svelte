@@ -4,6 +4,7 @@
 	import Login from '../pages/Login.svelte';
 	import Register from '../pages/Register.svelte';
 	import Team from '../pages/Team.svelte';
+	import Transactions from '../pages/Transactions.svelte';
 	import Profile from '../pages/Profile.svelte';
 	import wrap from 'svelte-spa-router/wrap';
 	import { session } from '$lib/storage';
@@ -35,6 +36,10 @@
 		}),
 		'/team/:id': wrap({
 			component: Team,
+			conditions: [() => $session !== null]
+		}),
+		'/team/:id/transactions': wrap({
+			component: Transactions,
 			conditions: [() => $session !== null]
 		})
 	};

@@ -1,10 +1,11 @@
 import os
+import time
 import uuid
 
 import jwt
 import ydb  # type: ignore
 from fastapi import HTTPException, status
-from schemas import MemberInfo, TeamInfo, UserInfo
+from schemas import MemberInfo, TeamInfo, Transaction, TransactionType, UserInfo
 from utils import hash_password, verify_password
 
 
@@ -75,6 +76,50 @@ class Controller:
         self.__add_member(user_id, team_id, is_admin=True)
         return team_id
 
+    def get_transations(
+        self, jwtoken: str, team_id: str, offset: int, limit: int
+    ) -> list[Transaction]:
+        query = """
+                declare $teamId as utf8;
+                declare $limit as Uint64;
+                declare $offset as Uint64;
+                select
+                Transactions.timestamp as `timestamp`,
+                uFrom.username as `from_username`,
+                uTo.username as `to_username`,
+                Transactions.id as id,
+                value, type
+                from Transactions
+                inner join Users uFrom
+                on Transactions.from = uFrom.id
+                inner join Users uTo
+                on Transactions.to = uTo.id
+                where `team_id` = $teamId
+                order by `timestamp` desc
+                limit $limit
+                offset $offset;
+                """
+        rows = self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={
+                "$teamId": team_id,
+                "$limit": limit,
+                "$offset": offset,
+            },
+        )[0].rows
+        return [
+            Transaction(
+                from_username=row.from_username,
+                to_username=row.to_username,
+                type=row.type,
+                timestamp=row.timestamp,
+                id=row.id,
+                value=row.value,
+            )
+            for row in rows
+        ]
+
     def invite(self, jwtoken: str, team_id: str, username: str) -> None:
         initiator_id = self.__get_user_id_by_jwt(jwtoken)
         if not self.__user_is_admin(initiator_id, team_id):
@@ -97,11 +142,17 @@ class Controller:
         if not self.__user_is_admin(initiator_id, team_id):
             raise HTTPException(status.HTTP_403_FORBIDDEN)
         self.__change_tokens(user_id, team_id, value)
+        self.__add_transaction(
+            initiator_id, user_id, team_id, value, TransactionType.REWARD
+        )
 
     def transfer(self, jwtoken: str, team_id: str, user_id: str, value: int) -> None:
         initiator_id = self.__get_user_id_by_jwt(jwtoken)
         self.__change_tokens(initiator_id, team_id, -value)
         self.__change_tokens(user_id, team_id, value)
+        self.__add_transaction(
+            initiator_id, user_id, team_id, value, TransactionType.TRANSFER
+        )
 
     def update_user(self, jwtoken: str, new_password: str) -> None:
         user_id = self.__get_user_id_by_jwt(jwtoken)
@@ -477,3 +528,39 @@ class Controller:
             .count
         )
         return count > 0
+
+    def __add_transaction(
+        self,
+        initiator_id: str,
+        reciever_id: str,
+        team_id: str,
+        value: int,
+        type: TransactionType,
+    ) -> str:
+        transaction_id = str(uuid.uuid4())
+        query = """
+                declare $fromId as utf8;
+                declare $toId as utf8;
+                declare $teamId as utf8;
+                declare $type as uint8;
+                declare $timestamp as timestamp;
+                declare $id as utf8;
+                declare $value as uint64;
+                insert into Transactions
+                (`from`, `to`, `type`, `timestamp`, `id`, `value`, `team_id`)
+                values ($fromId, $toId, $type, $timestamp, $id, $value, $teamId);
+                """
+        self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={
+                "$fromId": initiator_id,
+                "$toId": reciever_id,
+                "$type": type,
+                "$timestamp": time.time_ns() // 1000,
+                "$id": transaction_id,
+                "$value": value,
+                "$teamId": team_id,
+            },
+        )
+        return transaction_id
