@@ -85,6 +85,7 @@ class Controller:
                 declare $offset as Uint64;
                 select
                 Transactions.timestamp as `timestamp`,
+                Transactions.description as `description`,
                 uFrom.username as `from_username`,
                 uTo.username as `to_username`,
                 Transactions.id as id,
@@ -116,6 +117,7 @@ class Controller:
                 timestamp=row.timestamp,
                 id=row.id,
                 value=row.value,
+                description=row.description,
             )
             for row in rows
         ]
@@ -137,21 +139,25 @@ class Controller:
         if accepted:
             self.__add_member(user_id, team_id)
 
-    def reward(self, jwtoken: str, team_id: str, user_id: str, value: int) -> None:
+    def reward(
+        self, jwtoken: str, team_id: str, user_id: str, value: int, description: str
+    ) -> None:
         initiator_id = self.__get_user_id_by_jwt(jwtoken)
         if not self.__user_is_admin(initiator_id, team_id):
             raise HTTPException(status.HTTP_403_FORBIDDEN)
         self.__change_tokens(user_id, team_id, value)
         self.__add_transaction(
-            initiator_id, user_id, team_id, value, TransactionType.REWARD
+            initiator_id, user_id, team_id, value, TransactionType.REWARD, description
         )
 
-    def transfer(self, jwtoken: str, team_id: str, user_id: str, value: int) -> None:
+    def transfer(
+        self, jwtoken: str, team_id: str, user_id: str, value: int, description: str
+    ) -> None:
         initiator_id = self.__get_user_id_by_jwt(jwtoken)
         self.__change_tokens(initiator_id, team_id, -value)
         self.__change_tokens(user_id, team_id, value)
         self.__add_transaction(
-            initiator_id, user_id, team_id, value, TransactionType.TRANSFER
+            initiator_id, user_id, team_id, value, TransactionType.TRANSFER, description
         )
 
     def update_user(self, jwtoken: str, new_password: str) -> None:
@@ -536,6 +542,7 @@ class Controller:
         team_id: str,
         value: int,
         type: TransactionType,
+        description: str,
     ) -> str:
         transaction_id = str(uuid.uuid4())
         query = """
@@ -546,9 +553,11 @@ class Controller:
                 declare $timestamp as timestamp;
                 declare $id as utf8;
                 declare $value as uint64;
+                declare $desc as utf8;
                 insert into Transactions
-                (`from`, `to`, `type`, `timestamp`, `id`, `value`, `team_id`)
-                values ($fromId, $toId, $type, $timestamp, $id, $value, $teamId);
+                (`from`, `to`, `type`, `timestamp`,
+                `id`, `value`, `team_id`, `description`)
+                values ($fromId, $toId, $type, $timestamp, $id, $value, $teamId, $desc);
                 """
         self.__session_pool.retry_operation_sync(
             self.__callee,
@@ -561,6 +570,7 @@ class Controller:
                 "$id": transaction_id,
                 "$value": value,
                 "$teamId": team_id,
+                "$desc": description,
             },
         )
         return transaction_id
