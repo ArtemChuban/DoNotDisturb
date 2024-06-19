@@ -12,6 +12,9 @@
 	import FaTimes from 'svelte-icons/fa/FaTimes.svelte';
 	// @ts-expect-error, no types for this module
 	import FaCheck from 'svelte-icons/fa/FaCheck.svelte';
+	// @ts-expect-error, no types for this module
+	import FaRegEdit from 'svelte-icons/fa/FaRegEdit.svelte';
+
 	import { session, user } from '$lib/storage';
 	import { createTeam, inviteReply, type ITeam } from '$lib/api';
 	import { fly } from 'svelte/transition';
@@ -77,7 +80,12 @@
 
 <div class="flex flex-col h-3/4 w-3/4 gap-4">
 	<div class="card flex justify-around items-center py-4">
-		<div class={loading ? 'animate-pulse' : ''}><Avatar initials={$user.username} /></div>
+		<div class="{loading ? 'animate-pulse' : ''} relative">
+			<Avatar initials={$user.username} />
+			<button class="w-6 absolute top-0 right-0 text-primary-500" on:click={() => push('/profile')}
+				><FaRegEdit /></button
+			>
+		</div>
 		<span
 			class="text-md text-primary-500 {loading
 				? 'placeholder animate-pulse '

@@ -6,7 +6,7 @@ import uvicorn
 from Controller import Controller
 from fastapi import Body, FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
-from schemas import MemberInfo, UserInfo
+from schemas import MemberInfo, Transaction, UserInfo
 
 
 @asynccontextmanager
@@ -35,6 +35,14 @@ async def post_users(
     return controller.register(username, password)
 
 
+@app.patch("/users")
+async def patch_users(
+    session: Annotated[str, Header()],
+    password: Annotated[str, Body(embed=True)],
+) -> None:
+    controller.update_user(session, password)
+
+
 @app.post("/users/session")
 async def post_users_session(
     username: Annotated[str, Body(embed=True)],
@@ -49,6 +57,16 @@ async def post_team(
     name: Annotated[str, Body(embed=True)],
 ) -> str:
     return controller.create_team(session, name)
+
+
+@app.get("/teams/{team_id}/transactions")
+async def get_team_transactions(
+    session: Annotated[str, Header()],
+    team_id: str,
+    offset: int,
+    limit: int,
+) -> list[Transaction]:
+    return controller.get_transations(session, team_id, offset, limit)
 
 
 @app.get("/teams/{team_id}/members")

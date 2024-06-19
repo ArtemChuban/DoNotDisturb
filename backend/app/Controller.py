@@ -1,11 +1,12 @@
 import os
+import time
 import uuid
 
+import jwt
 import ydb  # type: ignore
 from fastapi import HTTPException, status
-from schemas import MemberInfo, TeamInfo, UserInfo
+from schemas import MemberInfo, TeamInfo, Transaction, TransactionType, UserInfo
 from utils import hash_password, verify_password
-import jwt
 
 
 class Controller:
@@ -41,7 +42,13 @@ class Controller:
         username = self.__get_username_by_id(user_id)
         teams = self.__get_teams_info_by_user_id(user_id)
         invites = self.__get_invites_info_by_user_id(user_id)
-        return UserInfo(username=username, teams=teams, invites=invites)
+        balance = self.__get__balance(user_id)
+        return UserInfo(
+            username=username,
+            teams=teams,
+            invites=invites,
+            balance=balance,
+        )
 
     def get_members(self, jwtoken: str, team_id: str) -> list[MemberInfo]:
         user_id = self.__get_user_id_by_jwt(jwtoken)
@@ -63,9 +70,55 @@ class Controller:
 
     def create_team(self, jwtoken: str, name: str) -> str:
         user_id = self.__get_user_id_by_jwt(jwtoken)
+        team_creation_price = 1  # TODO: env var
+        self.__change_balance(user_id, -team_creation_price)
         team_id = self.__create_team(user_id, name)
         self.__add_member(user_id, team_id, is_admin=True)
         return team_id
+
+    def get_transations(
+        self, jwtoken: str, team_id: str, offset: int, limit: int
+    ) -> list[Transaction]:
+        query = """
+                declare $teamId as utf8;
+                declare $limit as Uint64;
+                declare $offset as Uint64;
+                select
+                Transactions.timestamp as `timestamp`,
+                uFrom.username as `from_username`,
+                uTo.username as `to_username`,
+                Transactions.id as id,
+                value, type
+                from Transactions
+                inner join Users uFrom
+                on Transactions.from = uFrom.id
+                inner join Users uTo
+                on Transactions.to = uTo.id
+                where `team_id` = $teamId
+                order by `timestamp` desc
+                limit $limit
+                offset $offset;
+                """
+        rows = self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={
+                "$teamId": team_id,
+                "$limit": limit,
+                "$offset": offset,
+            },
+        )[0].rows
+        return [
+            Transaction(
+                from_username=row.from_username,
+                to_username=row.to_username,
+                type=row.type,
+                timestamp=row.timestamp,
+                id=row.id,
+                value=row.value,
+            )
+            for row in rows
+        ]
 
     def invite(self, jwtoken: str, team_id: str, username: str) -> None:
         initiator_id = self.__get_user_id_by_jwt(jwtoken)
@@ -89,11 +142,21 @@ class Controller:
         if not self.__user_is_admin(initiator_id, team_id):
             raise HTTPException(status.HTTP_403_FORBIDDEN)
         self.__change_tokens(user_id, team_id, value)
+        self.__add_transaction(
+            initiator_id, user_id, team_id, value, TransactionType.REWARD
+        )
 
     def transfer(self, jwtoken: str, team_id: str, user_id: str, value: int) -> None:
         initiator_id = self.__get_user_id_by_jwt(jwtoken)
         self.__change_tokens(initiator_id, team_id, -value)
         self.__change_tokens(user_id, team_id, value)
+        self.__add_transaction(
+            initiator_id, user_id, team_id, value, TransactionType.TRANSFER
+        )
+
+    def update_user(self, jwtoken: str, new_password: str) -> None:
+        user_id = self.__get_user_id_by_jwt(jwtoken)
+        self.__change_password(user_id, new_password)
 
     @staticmethod
     def __callee(
@@ -128,6 +191,41 @@ class Controller:
             parameters={"$userId": user_id, "$teamId": team_id, "$value": value},
         )
 
+    def __change_balance(self, user_id: str, value: int) -> None:
+        if value >= 0:
+            raise NotImplementedError
+        old_balance = self.__get__balance(user_id)
+        new_balance = old_balance + value
+        if new_balance < 0:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST)
+        query = """
+                declare $userId as utf8;
+                declare $value as Int64;
+                update Users
+                set `balance` = cast(cast(`balance` as Int64) + $value as Uint64)
+                where `id` = $userId;
+                """
+        self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id, "$value": value},
+        )
+
+    def __change_password(self, user_id: str, new_password: str) -> None:
+        hashed_password = hash_password(new_password)
+        query = """
+                declare $userId as utf8;
+                declare $password as utf8;
+                update Users
+                set `password` = $password
+                where `id` = $userId;
+                """
+        self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id, "$password": hashed_password},
+        )
+
     def __get__tokens(self, user_id: str, team_id: str) -> int:
         query = """
                 declare $userId as utf8;
@@ -144,6 +242,21 @@ class Controller:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
         return rows[0].tokens
 
+    def __get__balance(self, user_id: str) -> int:
+        query = """
+                declare $userId as utf8;
+                select balance from Users
+                where `id` = $userId;
+                """
+        rows = self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={"$userId": user_id},
+        )[0].rows
+        if len(rows) == 0:
+            raise HTTPException(status.HTTP_404_NOT_FOUND)
+        return rows[0].balance
+
     def __create_user(self, username: str, password: str) -> str:
         hashed_password = hash_password(password)
         user_id = str(uuid.uuid4())
@@ -151,8 +264,8 @@ class Controller:
                 declare $userId as utf8;
                 declare $username as utf8;
                 declare $password as utf8;
-                insert into Users (id, username, password)
-                values ($userId, $username, $password);
+                insert into Users (id, username, password, balance)
+                values ($userId, $username, $password, 0);
                 """
         self.__session_pool.retry_operation_sync(
             self.__callee,
@@ -415,3 +528,39 @@ class Controller:
             .count
         )
         return count > 0
+
+    def __add_transaction(
+        self,
+        initiator_id: str,
+        reciever_id: str,
+        team_id: str,
+        value: int,
+        type: TransactionType,
+    ) -> str:
+        transaction_id = str(uuid.uuid4())
+        query = """
+                declare $fromId as utf8;
+                declare $toId as utf8;
+                declare $teamId as utf8;
+                declare $type as uint8;
+                declare $timestamp as timestamp;
+                declare $id as utf8;
+                declare $value as uint64;
+                insert into Transactions
+                (`from`, `to`, `type`, `timestamp`, `id`, `value`, `team_id`)
+                values ($fromId, $toId, $type, $timestamp, $id, $value, $teamId);
+                """
+        self.__session_pool.retry_operation_sync(
+            self.__callee,
+            query=query,
+            parameters={
+                "$fromId": initiator_id,
+                "$toId": reciever_id,
+                "$type": type,
+                "$timestamp": time.time_ns() // 1000,
+                "$id": transaction_id,
+                "$value": value,
+                "$teamId": team_id,
+            },
+        )
+        return transaction_id
