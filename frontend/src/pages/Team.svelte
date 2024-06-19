@@ -60,27 +60,35 @@
 			valueAttr: { type: 'number', required: true, min: 1 },
 			response: (value: number) => {
 				if (!value) return;
-				const user_as_member = currentTeam.members.find(
-					(member) => member.username === $user.username
-				);
-				if (user_as_member === undefined) return;
-				if (user_as_member.tokens < value) {
-					toastStore.trigger({
-						message: "You don't have enough tokens",
-						background: 'variant-filled-error'
-					});
-					return;
-				}
-				transfer($session!, currentTeam.id, member.id, value)
-					.then(() => {
-						member.tokens += value;
-						user_as_member.tokens -= value;
-						currentTeam.members = currentTeam.members.sort((a, b) => b.tokens - a.tokens);
-						currentTeam = currentTeam;
-					})
-					.catch((error) => {
-						toastStore.trigger({ message: error, background: 'variant-filled-error' });
-					});
+				modalStore.trigger({
+					type: 'prompt',
+					title: 'Transfer',
+					body: `Enter description to transfer to ${member.username} ${value} tokens`,
+					valueAttr: { type: 'string', required: true },
+					response: (description: string) => {
+						const user_as_member = currentTeam.members.find(
+							(member) => member.username === $user.username
+						);
+						if (user_as_member === undefined) return;
+						if (user_as_member.tokens < value) {
+							toastStore.trigger({
+								message: "You don't have enough tokens",
+								background: 'variant-filled-error'
+							});
+							return;
+						}
+						transfer($session!, currentTeam.id, member.id, value, description)
+							.then(() => {
+								member.tokens += value;
+								user_as_member.tokens -= value;
+								currentTeam.members = currentTeam.members.sort((a, b) => b.tokens - a.tokens);
+								currentTeam = currentTeam;
+							})
+							.catch((error) => {
+								toastStore.trigger({ message: error, background: 'variant-filled-error' });
+							});
+					}
+				});
 			}
 		});
 	};
@@ -92,16 +100,24 @@
 			body: `Enter tokens value to reward ${member.username}`,
 			valueAttr: { type: 'number', required: true, min: 1 },
 			response: (value: number) => {
-				if (!value) return;
-				reward($session!, currentTeam.id, member.id, value)
-					.then(() => {
-						member.tokens += value;
-						currentTeam.members = currentTeam.members.sort((a, b) => b.tokens - a.tokens);
-						currentTeam = currentTeam;
-					})
-					.catch((error) => {
-						toastStore.trigger({ message: error, background: 'variant-filled-error' });
-					});
+				modalStore.trigger({
+					type: 'prompt',
+					title: 'Description',
+					body: `Enter description to reward ${member.username} with ${value} tokens`,
+					valueAttr: { type: 'string', required: true },
+					response: (description: string) => {
+						if (!value) return;
+						reward($session!, currentTeam.id, member.id, value, description)
+							.then(() => {
+								member.tokens += value;
+								currentTeam.members = currentTeam.members.sort((a, b) => b.tokens - a.tokens);
+								currentTeam = currentTeam;
+							})
+							.catch((error) => {
+								toastStore.trigger({ message: error, background: 'variant-filled-error' });
+							});
+					}
+				});
 			}
 		});
 	};

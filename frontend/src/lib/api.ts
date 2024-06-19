@@ -28,6 +28,7 @@ export interface ITransaction {
 	timestamp: number;
 	value: number;
 	id: string;
+	description: string;
 }
 
 const ENDPOINT = PUBLIC_API_ENDPOINT;
@@ -189,10 +190,22 @@ export const transfer: (
 	session: string,
 	team_id: string,
 	user_id: string,
-	value: number
-) => Promise<void> = async (session: string, team_id: string, user_id: string, value: number) => {
+	value: number,
+	description: string
+) => Promise<void> = async (
+	session: string,
+	team_id: string,
+	user_id: string,
+	value: number,
+	description: string
+) => {
 	const response = await fetch(`${ENDPOINT}/transfer`, {
-		body: JSON.stringify({ team_id: team_id, user_id: user_id, value: value }),
+		body: JSON.stringify({
+			team_id: team_id,
+			user_id: user_id,
+			value: value,
+			description: description
+		}),
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', session: session }
 	});
@@ -206,10 +219,22 @@ export const reward: (
 	session: string,
 	team_id: string,
 	user_id: string,
-	value: number
-) => Promise<void> = async (session: string, team_id: string, user_id: string, value: number) => {
+	value: number,
+	description: string
+) => Promise<void> = async (
+	session: string,
+	team_id: string,
+	user_id: string,
+	value: number,
+	description: string
+) => {
 	const response = await fetch(`${ENDPOINT}/reward`, {
-		body: JSON.stringify({ team_id: team_id, user_id: user_id, value: value }),
+		body: JSON.stringify({
+			team_id: team_id,
+			user_id: user_id,
+			value: value,
+			description: description
+		}),
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', session: session }
 	});

@@ -97,6 +97,9 @@
 				<span>
 					{new Date(Math.floor(tx.timestamp / 1000)).toLocaleString('en-EN')}
 				</span>
+				<p class="break-words">
+					{tx.description}
+				</p>
 			</div>
 		{/each}
 		{#if !fullLoaded}
