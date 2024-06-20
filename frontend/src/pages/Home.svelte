@@ -20,6 +20,7 @@
 	import { fly } from 'svelte/transition';
 	import { config } from '$lib/config';
 	import { push } from 'svelte-spa-router';
+	import { _ } from 'svelte-i18n';
 
 	const modalStore = getModalStore();
 	const toastStore = getToastStore();
@@ -33,8 +34,8 @@
 	const handleLogOut = () => {
 		modalStore.trigger({
 			type: 'confirm',
-			title: 'Log out',
-			body: 'Are you sure you wish to log out from your account?',
+			title: $_('home.logout.title'),
+			body: $_('home.logout.body'),
 			response: (confirmed: boolean) => {
 				if (!confirmed) return;
 				$session = null;
@@ -60,8 +61,8 @@
 	const handleCreateNewTeam = async () => {
 		modalStore.trigger({
 			type: 'prompt',
-			title: 'Create new team',
-			body: 'New team name',
+			title: $_('home.create.title'),
+			body: $_('home.create.body'),
 			valueAttr: { type: 'text', required: true },
 			response: (team_name: string) => {
 				if (!team_name) return;
@@ -150,7 +151,7 @@
 				class="flex justify-between font-bold btn card p-4"
 				on:click={handleCreateNewTeam}
 			>
-				<span>Create new team</span>
+				<span>{$_('home.createButton')}</span>
 				<div class="w-6 text-success-500"><FaPlus /></div>
 			</button>
 		{/if}
