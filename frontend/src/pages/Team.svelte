@@ -12,7 +12,7 @@
 	import FaHistory from 'svelte-icons/fa/FaHistory.svelte';
 
 	import { session, user } from '$lib/storage';
-	import { getMembers, inviteMember, type IMember, transfer, reward, type ITeam } from '$lib/api';
+	import { getMembers, inviteMember, type IMember, transfer, type ITeam } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { config } from '$lib/config';
 	import { fly } from 'svelte/transition';
@@ -93,35 +93,6 @@
 		});
 	};
 
-	const handleReward = async (member: IMember) => {
-		modalStore.trigger({
-			type: 'prompt',
-			title: 'Reward',
-			body: `Enter tokens value to reward ${member.username}`,
-			valueAttr: { type: 'number', required: true, min: 1 },
-			response: (value: number) => {
-				modalStore.trigger({
-					type: 'prompt',
-					title: 'Description',
-					body: `Enter description to reward ${member.username} with ${value} tokens`,
-					valueAttr: { type: 'string', required: true },
-					response: (description: string) => {
-						if (!value) return;
-						reward($session!, currentTeam.id, member.id, value, description)
-							.then(() => {
-								member.tokens += value;
-								currentTeam.members = currentTeam.members.sort((a, b) => b.tokens - a.tokens);
-								currentTeam = currentTeam;
-							})
-							.catch((error) => {
-								toastStore.trigger({ message: error, background: 'variant-filled-error' });
-							});
-					}
-				});
-			}
-		});
-	};
-
 	const handleInvite = async () => {
 		modalStore.trigger({
 			type: 'prompt',
@@ -154,6 +125,14 @@
 		>
 		<span class="font-bold text-xl text-primary-500">{currentTeam.name}</span>
 		<span class="font-bold text-xl text-primary-500">{totalTokens}</span>
+		{#if isAdmin}
+			<button
+				class="btn btn-icon w-6 text-success-500"
+				on:click={() => push(`/team/${currentTeam.id}/reward`)}
+			>
+				<FaAward />
+			</button>
+		{/if}
 		<button
 			class="w-6 text-secondary-500"
 			on:click={() => push(`/team/${currentTeam.id}/transactions`)}><FaHistory /></button
@@ -197,11 +176,6 @@
 							on:click={() => handleTransfer(member)}
 						>
 							<FaPaperPlane />
-						</button>
-					{/if}
-					{#if isAdmin}
-						<button class="btn btn-icon w-6 text-success-500" on:click={() => handleReward(member)}>
-							<FaAward />
 						</button>
 					{/if}
 				</div>
