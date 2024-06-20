@@ -1,0 +1,50 @@
+{
+	"home": {
+		"logout": {
+			"title": "Log out",
+			"body": "Are you sure you wish to log out from your account?"
+		},
+		"create": {
+			"title": "Create new team",
+			"body": "New team name"
+		},
+		"createButton": "Create new team"
+	},
+	"team": {
+		"transfer": {
+			"title": "Transfer",
+			"body": {
+				"value": "Token value for transfer",
+				"description": "Description for transfer"
+			},
+			"messages": {
+				"lowTokens": "You don't have enough tokens"
+			}
+		},
+		"invite": {
+			"title": "Invite",
+			"body": "Username"
+		},
+		"button": "Invite new member"
+	},
+	"login": {
+		"messages": {
+			"empty": "Login or password can't be empty"
+		},
+		"title": "Login",
+		"placeholder": {
+			"username": "Username",
+			"password": "Password"
+		},
+		"button": "Login",
+		"registerLink": "I don't have an account"
+	},
+	"reward": {
+		"title": "Reward",
+		"button": "Reward",
+		"placeholder": {
+			"description": "Description",
+			"value": "Value"
+		}
+	}
+}

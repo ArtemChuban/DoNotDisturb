@@ -17,6 +17,7 @@
 	import { config } from '$lib/config';
 	import { fly } from 'svelte/transition';
 	import { push } from 'svelte-spa-router';
+	import { _ } from 'svelte-i18n';
 
 	export let params: { id: string };
 	const toastStore = getToastStore();
@@ -55,15 +56,15 @@
 	const handleTransfer = async (member: IMember) => {
 		modalStore.trigger({
 			type: 'prompt',
-			title: 'Transfer',
-			body: `Enter tokens value to transfer to ${member.username}`,
+			title: $_('team.transfer.title'),
+			body: $_('team.transfer.body.value'),
 			valueAttr: { type: 'number', required: true, min: 1 },
 			response: (value: number) => {
 				if (!value) return;
 				modalStore.trigger({
 					type: 'prompt',
-					title: 'Transfer',
-					body: `Enter description to transfer to ${member.username} ${value} tokens`,
+					title: $_('team.transfer.title'),
+					body: $_('team.transfer.body.description'),
 					valueAttr: { type: 'string', required: true },
 					response: (description: string) => {
 						const user_as_member = currentTeam.members.find(
@@ -72,7 +73,7 @@
 						if (user_as_member === undefined) return;
 						if (user_as_member.tokens < value) {
 							toastStore.trigger({
-								message: "You don't have enough tokens",
+								message: $_('team.messages.lowTokens'),
 								background: 'variant-filled-error'
 							});
 							return;
@@ -96,8 +97,8 @@
 	const handleInvite = async () => {
 		modalStore.trigger({
 			type: 'prompt',
-			title: 'Invite',
-			body: `Enter username`,
+			title: $_('team.invite.title'),
+			body: $_('team.invite.body'),
 			valueAttr: { type: 'text', required: true },
 			response: (value: string) => {
 				if (!value) return;
@@ -183,7 +184,7 @@
 		{/each}
 		{#if isAdmin}
 			<button class="flex justify-between font-bold btn card p-4" on:click={handleInvite}>
-				<span>Invite team member</span>
+				<span>{$_('team.invite.button')}</span>
 				<div class="w-6 text-success-500"><FaPlus /></div>
 			</button>
 		{/if}
