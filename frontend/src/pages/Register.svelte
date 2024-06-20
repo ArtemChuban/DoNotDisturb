@@ -1,4 +1,5 @@
 <script lang="ts">
+	// TODO: localization
 	import { createAccount } from '$lib/api';
 	import { session } from '$lib/storage';
 	import { ProgressRadial, getToastStore } from '@skeletonlabs/skeleton';

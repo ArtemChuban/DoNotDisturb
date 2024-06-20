@@ -3,6 +3,7 @@
 	import { session } from '$lib/storage';
 	import { ProgressRadial, getToastStore } from '@skeletonlabs/skeleton';
 	import { push } from 'svelte-spa-router';
+	import { _ } from 'svelte-i18n';
 
 	const toastStore = getToastStore();
 
@@ -13,7 +14,7 @@
 	const handleLogin = () => {
 		if (username.length < 1 || password.length < 1) {
 			toastStore.trigger({
-				message: "Login or password can't be empty",
+				message: $_('login.messages.empty'),
 				background: 'variant-filled-error'
 			});
 			return;
@@ -32,19 +33,19 @@
 </script>
 
 <div class="flex flex-col gap-4 text-center">
-	<span class="text-2xl font-bold">Login</span>
+	<span class="text-2xl font-bold">{$_('login.title')}</span>
 	<input
 		type="text"
 		disabled={loading}
 		class="input"
-		placeholder="Username"
+		placeholder={$_('login.placeholder.username')}
 		bind:value={username}
 	/>
 	<input
 		type="password"
 		disabled={loading}
 		class="input"
-		placeholder="Password"
+		placeholder={$_('login.placeholder.password')}
 		bind:value={password}
 	/>
 	<button
@@ -56,8 +57,8 @@
 		{#if loading}
 			<ProgressRadial width="w-6" />
 		{:else}
-			<span>Login</span>
+			<span>{$_('login.button')}</span>
 		{/if}
 	</button>
-	<a href="/register" class="anchor">I don't have an account</a>
+	<a href="/register" class="anchor">{$_('login.registerLink')}</a>
 </div>

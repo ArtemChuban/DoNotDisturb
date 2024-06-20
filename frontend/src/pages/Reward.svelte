@@ -12,6 +12,7 @@
 	import { push } from 'svelte-spa-router';
 	// @ts-expect-error, no types for this module
 	import FaArrowLeft from 'svelte-icons/fa/FaArrowLeft.svelte';
+	import { _ } from 'svelte-i18n';
 
 	const toastStore = getToastStore();
 	export let params: { id: string };
@@ -75,7 +76,7 @@
 			<button type="button" class="btn btn-icon w-6" on:click={() => push(`/team/${params.id}`)}
 				><FaArrowLeft /></button
 			>
-			<h1 class="h1">Reward</h1>
+			<h1 class="h1">{$_('reward.title')}</h1>
 		</div>
 		<InputChip
 			bind:input={inputChip}
@@ -90,8 +91,18 @@
 				on:selection={handleSelect}
 			/>
 		</div>
-		<input type="number" disabled={loading} class="input" placeholder="Value" bind:value />
-		<textarea class="textarea" rows="4" placeholder="Description" bind:value={description}
+		<input
+			type="number"
+			disabled={loading}
+			class="input"
+			placeholder={$_('reward.placeholder.value')}
+			bind:value
+		/>
+		<textarea
+			class="textarea"
+			rows="4"
+			placeholder={$_('reward.placeholder.description')}
+			bind:value={description}
 		></textarea>
 		<button
 			type="button"
@@ -102,7 +113,7 @@
 			{#if loading}
 				<ProgressRadial width="w-6" />
 			{:else}
-				<span>Reward</span>
+				<span>{$_('reward.button')}</span>
 			{/if}
 		</button>
 	</div>{/if}
