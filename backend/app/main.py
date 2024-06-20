@@ -99,11 +99,12 @@ async def post_teams_invite_reply(
 async def post_reward(
     session: Annotated[str, Header()],
     team_id: Annotated[str, Body(embed=True)],
-    user_id: Annotated[str, Body(embed=True)],
+    user_ids: Annotated[list[str], Body(embed=True)],
     value: Annotated[int, Body(embed=True, gt=0)],
     description: Annotated[str, Body(embed=True)],
 ):
-    controller.reward(session, team_id, user_id, value, description)
+    for user_id in user_ids:
+        controller.reward(session, team_id, user_id, value, description)
 
 
 @app.post("/transfer")
