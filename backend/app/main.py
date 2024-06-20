@@ -101,8 +101,9 @@ async def post_reward(
     team_id: Annotated[str, Body(embed=True)],
     user_id: Annotated[str, Body(embed=True)],
     value: Annotated[int, Body(embed=True, gt=0)],
+    description: Annotated[str, Body(embed=True)],
 ):
-    controller.reward(session, team_id, user_id, value)
+    controller.reward(session, team_id, user_id, value, description)
 
 
 @app.post("/transfer")
@@ -111,8 +112,9 @@ async def post_transfer(
     team_id: Annotated[str, Body(embed=True)],
     user_id: Annotated[str, Body(embed=True)],
     value: Annotated[int, Body(embed=True, gt=0)],
+    description: Annotated[str, Body(embed=True)],
 ):
-    controller.transfer(session, team_id, user_id, value)
+    controller.transfer(session, team_id, user_id, value, description)
 
 
 @app.get("/users")
