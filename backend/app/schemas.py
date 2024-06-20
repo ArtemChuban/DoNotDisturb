@@ -34,3 +34,4 @@ class Transaction(BaseModel):
     timestamp: int
     id: str
     value: int
+    description: str
