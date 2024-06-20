@@ -218,20 +218,20 @@ export const transfer: (
 export const reward: (
 	session: string,
 	team_id: string,
-	user_id: string,
+	user_ids: string[],
 	value: number,
 	description: string
 ) => Promise<void> = async (
 	session: string,
 	team_id: string,
-	user_id: string,
+	user_ids: string[],
 	value: number,
 	description: string
 ) => {
 	const response = await fetch(`${ENDPOINT}/reward`, {
 		body: JSON.stringify({
 			team_id: team_id,
-			user_id: user_id,
+			user_ids: user_ids,
 			value: value,
 			description: description
 		}),
