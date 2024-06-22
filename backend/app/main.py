@@ -100,7 +100,7 @@ async def post_reward(
     session: Annotated[str, Header()],
     team_id: Annotated[str, Body(embed=True)],
     user_ids: Annotated[list[str], Body(embed=True)],
-    value: Annotated[int, Body(embed=True, gt=0)],
+    value: Annotated[int, Body(embed=True)],
     description: Annotated[str, Body(embed=True)],
 ):
     for user_id in user_ids:

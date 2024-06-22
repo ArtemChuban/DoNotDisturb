@@ -552,7 +552,7 @@ class Controller:
                 declare $type as uint8;
                 declare $timestamp as timestamp;
                 declare $id as utf8;
-                declare $value as uint64;
+                declare $value as int64;
                 declare $desc as utf8;
                 insert into Transactions
                 (`from`, `to`, `type`, `timestamp`,
